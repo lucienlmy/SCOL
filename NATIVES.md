@@ -156,6 +156,73 @@ Reads a 32-bit integer from memory.
 
 ---
 
+## `NATIVE PROC MEMORY_WRITE_FLOAT(POINTER ptr, FLOAT value) = "0xFFD64B1EC611C6DB"`
+
+Writes a float value to memory.
+
+- **Parameters:**
+  - `ptr (POINTER)`: Destination address.
+  - `value (FLOAT)`: Value to write.
+
+---
+
+## `NATIVE FUNC FLOAT MEMORY_READ_FLOAT(POINTER ptr) = "0xF2A6DA07E3EE4850"`
+
+Reads a float value from memory.
+
+- **Parameters:**
+  - `ptr (POINTER)`: Address to read from.
+
+- **Returns:**
+  - `FLOAT`: Value read from memory.
+
+---
+
+## `NATIVE PROC MEMORY_WRITE_STRING(POINTER ptr, STRING value, INT size) = "0x907338E62DD47ACD"`
+
+Writes a string to memory, up to the specified size.
+
+- **Parameters:**
+  - `ptr (POINTER)`: Destination address.
+  - `value (STRING)`: Value to write.
+  - `size (INT)`: Maximum number of bytes to write.
+
+---
+
+## `NATIVE FUNC STRING MEMORY_READ_STRING(POINTER ptr) = "0x959095C3F1E3E44A"`
+
+Reads a string from memory.
+
+- **Parameters:**
+  - `ptr (POINTER)`: Address to read from.
+
+- **Returns:**
+  - `STRING`: Value read from memory.
+
+---
+
+## `NATIVE PROC MEMORY_WRITE_VECTOR(POINTER ptr, VECTOR value) = "0x077B1F0EEB16F19A"`
+
+Writes a vector to memory.
+
+- **Parameters:**
+  - `ptr (POINTER)`: Destination address.
+  - `value (VECTOR)`: Value to write.
+
+---
+
+## `NATIVE FUNC VECTOR MEMORY_READ_VECTOR(POINTER ptr) = "0x0DD6010289D2A79C"`
+
+Reads a vector from memory.
+
+- **Parameters:**
+  - `ptr (POINTER)`: Address to read from.
+
+- **Returns:**
+  - `VECTOR`: Value read from memory.
+
+---
+
 ### `NATIVE PROC SET_CURRENT_SCRIPT_THREAD(INT scriptHash) = "0x7AFACDB81809E2C1"`
 
 Spoofs the currently running script thread. Make sure to restore it when you're done with it.

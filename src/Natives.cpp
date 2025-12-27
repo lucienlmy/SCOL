@@ -24,6 +24,12 @@ namespace SCOL::Natives
     static constexpr rage::scrNativeHash MEMORY_READ                                       = 0x5353EB6CABD2A870;
     static constexpr rage::scrNativeHash MEMORY_WRITE_INT                                  = 0xA1CDE11FA6D2838F;
     static constexpr rage::scrNativeHash MEMORY_READ_INT                                   = 0x1884B5B84D20DEF9;
+    static constexpr rage::scrNativeHash MEMORY_WRITE_FLOAT                                = 0xFFD64B1EC611C6DB;
+    static constexpr rage::scrNativeHash MEMORY_READ_FLOAT                                 = 0xF2A6DA07E3EE4850;
+    static constexpr rage::scrNativeHash MEMORY_WRITE_STRING                               = 0x907338E62DD47ACD;
+    static constexpr rage::scrNativeHash MEMORY_READ_STRING                                = 0x959095C3F1E3E44A;
+    static constexpr rage::scrNativeHash MEMORY_WRITE_VECTOR                               = 0x077B1F0EEB16F19A;
+    static constexpr rage::scrNativeHash MEMORY_READ_VECTOR                                = 0x0DD6010289D2A79C;
 
     // Script Threads
     static constexpr rage::scrNativeHash SET_CURRENT_SCRIPT_THREAD                         = 0x7AFACDB81809E2C1;
@@ -284,6 +290,77 @@ namespace SCOL::Natives
             retVal = *Memory(ptr).As<std::int32_t*>();
 
         ctx->m_ReturnValue->Int = retVal;
+    }
+
+    static void NativeCommandMemoryWriteFloat(rage::scrNativeCallContext* ctx)
+    {
+        auto ptr = ctx->m_Args[0].Any;
+        auto value = ctx->m_Args[1].Float;
+
+        if (!ptr)
+            return;
+
+        *Memory(ptr).As<float*>() = value;
+    }
+
+    static void NativeCommandMemoryReadFloat(rage::scrNativeCallContext* ctx)
+    {
+        auto ptr = ctx->m_Args[0].Any;
+
+        float retVal{};
+        if (ptr)
+            retVal = *Memory(ptr).As<float*>();
+
+        ctx->m_ReturnValue->Float = retVal;
+    }
+
+    static void NativeCommandMemoryWriteString(rage::scrNativeCallContext* ctx)
+    {
+        auto ptr = ctx->m_Args[0].Any;
+        auto value = ctx->m_Args[1].String;
+        auto size = ctx->m_Args[1].Int;
+
+        if (!ptr)
+            return;
+
+        std::strncpy(Memory(ptr).As<char*>(), value, size);
+    }
+
+    static void NativeCommandMemoryReadString(rage::scrNativeCallContext* ctx)
+    {
+        auto ptr = ctx->m_Args[0].Any;
+
+        const char* retVal{};
+        if (ptr)
+            retVal = Memory(ptr).As<const char*>();
+
+        ctx->m_ReturnValue->String = retVal;
+    }
+
+    static void NativeCommandMemoryWriteVector(rage::scrNativeCallContext* ctx)
+    {
+        auto ptr = ctx->m_Args[0].Any;
+        auto valueX = ctx->m_Args[2].Float;
+        auto valueY = ctx->m_Args[3].Float;
+        auto valueZ = ctx->m_Args[4].Float;
+
+        if (!ptr)
+            return;
+
+        *Memory(ptr).As<rage::Vector3*>() = rage::Vector3(valueX, valueY, valueZ);
+    }
+
+    static void NativeCommandMemoryReadVector(rage::scrNativeCallContext* ctx)
+    {
+        auto ptr = ctx->m_Args[0].Any;
+
+        rage::Vector3 retVal{};
+        if (ptr)
+            retVal = *Memory(ptr).As<rage::Vector3*>();
+
+        ctx->m_ReturnValue[0].Float = retVal.x;
+        ctx->m_ReturnValue[1].Float = retVal.y;
+        ctx->m_ReturnValue[2].Float = retVal.z;
     }
 
     static void NativeCommandSetCurrentScriptThread(rage::scrNativeCallContext* ctx)
@@ -644,6 +721,12 @@ namespace SCOL::Natives
         RegisterNative(MEMORY_READ,                                       NativeCommandMemoryRead);
         RegisterNative(MEMORY_WRITE_INT,                                  NativeCommandMemoryWriteInt);
         RegisterNative(MEMORY_READ_INT,                                   NativeCommandMemoryReadInt);
+        RegisterNative(MEMORY_WRITE_FLOAT,                                NativeCommandMemoryWriteFloat);
+        RegisterNative(MEMORY_READ_FLOAT,                                 NativeCommandMemoryReadFloat);
+        RegisterNative(MEMORY_WRITE_STRING,                               NativeCommandMemoryWriteString);
+        RegisterNative(MEMORY_READ_STRING,                                NativeCommandMemoryReadString);
+        RegisterNative(MEMORY_WRITE_VECTOR,                               NativeCommandMemoryWriteVector);
+        RegisterNative(MEMORY_READ_VECTOR,                                NativeCommandMemoryReadVector);
 
         RegisterNative(SET_CURRENT_SCRIPT_THREAD,                         NativeCommandSetCurrentScriptThread);
         RegisterNative(SET_SCRIPT_THREAD_STATE,                           NativeCommandSetScriptThreadState);
