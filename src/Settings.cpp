@@ -42,6 +42,12 @@ namespace SCOL
             dirty = true;
         }
 
+        if (!ini.GetValue("Settings", "ScriptOverridesFolder"))
+        {
+            ini.SetValue("Settings", "ScriptOverridesFolder", "script-overrides");
+            dirty = true;
+        }
+
         if (!ini.GetValue("Settings", "ReloadKey"))
         {
             ini.SetLongValue("Settings", "ReloadKey", VK_F5);
@@ -52,6 +58,7 @@ namespace SCOL
             ini.SaveFile(m_FileName.c_str());
 
         g_Variables.ScriptsFolder = ini.GetValue("Settings", "ScriptsFolder", ".");
+        g_Variables.ScriptOverridesFolder = ini.GetValue("Settings", "ScriptOverridesFolder", "script-overrides");
         g_Variables.ReloadKey = ini.GetLongValue("Settings", "ReloadKey", VK_F5);
     }
 

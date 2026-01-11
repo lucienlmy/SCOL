@@ -29,6 +29,23 @@ namespace SCOL
         Hooking::GetOriginal<decltype(&AllocateGlobalBlockDetour)>("AllocateGlobalBlockHook")(program);
     }
 
+    static uint32_t StartNewGtaThreadDetour(uint32_t programHash, void* args, uint32_t argCount, uint32_t stackSize)
+    {
+        if (auto path = Loader::GetScriptOverridePath(programHash); !path.empty())
+        {
+            if (auto program = rage::scrProgram::FindScriptProgram(programHash))
+                g_Pointers.scrProgramDtor(program); // Free the program loaded by natives first, LoadAndStartScriptObj will create a new one from the SCO
+
+            if (auto id = Loader::LoadScript(path.c_str(), args, argCount, stackSize))
+            {
+                LOGF(INFO, "Loaded script override from path '{}'.", path.c_str());
+                return id;
+            }
+        }
+
+        return Hooking::GetOriginal<decltype(&StartNewGtaThreadDetour)>("StartNewGtaThreadHook")(programHash, args, argCount, stackSize);
+    }
+
     bool Hooking::Init()
     {
         if (MH_Initialize() != MH_OK)
@@ -36,6 +53,7 @@ namespace SCOL
 
         AddHook("WndProcHook", g_Pointers.WndProc, WndProcDetour);
         AddHook("AllocateGlobalBlockHook", g_Pointers.AllocateGlobalBlock, AllocateGlobalBlockDetour);
+        AddHook("StartNewGtaThreadHook", g_Pointers.StartNewGtaThread, StartNewGtaThreadDetour);
 
         bool success = true;
 

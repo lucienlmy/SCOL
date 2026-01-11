@@ -8,6 +8,7 @@ namespace SCOL
         struct Variables
         {
             std::string ScriptsFolder = ".";
+            std::string ScriptOverridesFolder = "script-overrides";
             int ReloadKey = VK_F5;
         };
 

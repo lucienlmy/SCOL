@@ -60,6 +60,14 @@ namespace SCOL
             RunScriptThread = addr.Sub(0x24).As<Functions::RunScriptThread>();
         });
 
+        scanner.Add("StartNewGtaThread", "E8 ? ? ? ? 89 46 ? 89 C1 E8 ? ? ? ? 48 89 46", [this](Memory addr) {
+            StartNewGtaThread = addr.Add(1).Rip().As<PVOID>();
+        });
+
+        scanner.Add("scrProgramDtor", "8B 56 ? 83 E2 1F", [this](Memory addr) {
+            scrProgramDtor = addr.Sub(0x22).As<Functions::scrProgramDtor>();
+        });
+
         return scanner.Scan();
     }
 }

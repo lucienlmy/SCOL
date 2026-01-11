@@ -8,6 +8,22 @@ namespace SCOL::Loader
 {
     static std::vector<std::uint32_t> scriptThreadIds{};
 
+    uint32_t LoadScript(const char* path, void* args, uint32_t argCount, uint32_t stackSize)
+    {
+        if (auto id = g_Pointers.LoadAndStartScriptObj(path, args, argCount * sizeof(rage::scrValue), stackSize))
+        {
+            if (auto thread = reinterpret_cast<GtaThread*>(rage::scrThread::FindScriptThreadById(id)))
+            {
+                g_Pointers.RegisterScriptHandler(g_Pointers.ScriptHandlerMgrPtr, thread);
+                Natives::CleanupScriptLog(thread->m_ScriptHash);
+
+                return id; // Don't push this to scriptThreadIds, we don't want to allow reloading script overrides
+            }
+        }
+
+        return 0;
+    }
+
     void LoadScripts()
     {
         auto scriptsFolder = std::filesystem::absolute(g_Variables.ScriptsFolder);
@@ -27,17 +43,11 @@ namespace SCOL::Loader
             auto name = entry.path().stem().string();
             auto data = Settings::GetScriptData(name);
             LOGF(INFO, "Loaded data for script '{}'. ArgCount={}, StackSize={}, CleanupFunction=0x{:X}", name, data.ArgCount, data.StackSize, data.CleanupFunction);
-            if (auto id = g_Pointers.LoadAndStartScriptObj(path.c_str(), data.ArgCount ? data.Args.data() : nullptr, data.ArgCount * sizeof(rage::scrValue), data.StackSize))
+
+            if (auto id = LoadScript(path.c_str(), data.ArgCount ? data.Args.data() : nullptr, data.ArgCount, data.StackSize))
             {
-                if (auto thread = reinterpret_cast<GtaThread*>(rage::scrThread::FindScriptThreadById(id)))
-                {
-                    g_Pointers.RegisterScriptHandler(g_Pointers.ScriptHandlerMgrPtr, thread);
-
-                    Natives::CleanupScriptLog(thread->m_ScriptHash);
-
-                    scriptThreadIds.push_back(id);
-                    LOGF(INFO, "Started new thread with ID {}.", id);
-                }
+                scriptThreadIds.push_back(id);
+                LOGF(INFO, "Started new thread with ID {}.", id);
             }
         }
     }
@@ -67,5 +77,26 @@ namespace SCOL::Loader
 
         scriptThreadIds.clear();
         LoadScripts();
+    }
+
+    std::string GetScriptOverridePath(uint32_t hash)
+    {
+        auto scriptOverridesFolder = std::filesystem::absolute(g_Variables.ScriptOverridesFolder);
+
+        if (!std::filesystem::exists(scriptOverridesFolder) || !std::filesystem::is_directory(scriptOverridesFolder))
+            return {};
+
+        for (const auto& entry : std::filesystem::directory_iterator(scriptOverridesFolder))
+        {
+            if (!entry.is_regular_file() || entry.path().extension().string() != ".sco")
+                continue;
+
+            auto path = entry.path().string();
+            auto name = entry.path().stem().string();
+            if (Joaat(name) == hash)
+                return path;
+        }
+
+        return {};
     }
 }

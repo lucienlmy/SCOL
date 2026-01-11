@@ -28,3 +28,5 @@ StackSize=1424
 CleanupFunction=0
 ```
 You can edit these values as needed for your script. Use the `0,1,2,3` format to pass arguments. For `CleanupFunction`, you can pass the address of the function that you want to be called whenever scripts are reloaded. Note that it must not take any arguments.
+
+You can override game scripts by placing custom scripts in the directory specified by `ScriptOverridesFolder`. When the game attempts to load a script, its hash is checked against the scripts in that directory; if a matching hash is found, the custom script is loaded instead of the original.
