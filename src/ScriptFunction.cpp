@@ -8,8 +8,8 @@ namespace SCOL
 {
     void ScriptFunction::CallImpl(const joaat_t script, const joaat_t pc, const std::vector<std::uint64_t>& args, void* returnValue, std::uint32_t returnSize)
     {
-        auto thread = rage::scrThread::FindScriptThread(script);
-        auto program = rage::scrProgram::FindScriptProgram(script);
+        auto thread = rage::scrThread::GetThread(script);
+        auto program = rage::scrProgram::GetProgram(script);
 
         if (!thread || !program || !pc)
             return;

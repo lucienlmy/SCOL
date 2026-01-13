@@ -4,17 +4,8 @@
 
 namespace rage
 {
-    class scrNativeCallContext
+    struct scrNativeCallContext
     {
-    public:
-        scrNativeCallContext(scrValue* retVal, std::int32_t argCount, scrValue* args)
-            : m_ReturnValue(retVal),
-              m_ArgCount(argCount),
-              m_Args(args),
-              m_NumVectorRefs(0)
-        {
-        }
-
         scrValue* m_ReturnValue;
         std::uint32_t m_ArgCount;
         scrValue* m_Args;

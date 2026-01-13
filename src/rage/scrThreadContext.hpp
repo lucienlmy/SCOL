@@ -22,7 +22,9 @@ namespace rage
     {
     public:
         std::uint32_t m_ThreadId;
-        std::uint64_t m_ScriptHash;
+        char m_Pad1[0x04];
+        std::uint32_t m_ProgramHash;
+        char m_Pad2[0x04];
         scrThreadState m_State;
         std::uint32_t m_ProgramCounter;
         std::uint32_t m_FramePointer;
@@ -30,7 +32,7 @@ namespace rage
         float m_TimerA;
         float m_TimerB;
         float m_WaitTimer;
-        char m_Pad1[0x2C];
+        char m_Pad3[0x2C];
         std::uint32_t m_StackSize;
         std::uint32_t m_CatchProgramCounter;
         std::uint32_t m_CatchFramePointer;

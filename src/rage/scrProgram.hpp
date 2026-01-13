@@ -7,7 +7,7 @@ namespace rage
     class scrProgram : public pgBase
     {
     public:
-        std::uint8_t** m_CodeBlocks;
+        std::uint8_t** m_CodePages;
         std::uint32_t m_GlobalVersion;
         std::uint32_t m_CodeSize;
         std::uint32_t m_ArgCount;
@@ -15,7 +15,7 @@ namespace rage
         std::uint32_t m_GlobalCountAndBlock;
         std::uint32_t m_NativeCount;
         scrValue* m_Statics;
-        scrValue** m_Globals;
+        scrValue** m_GlobalPages;
         std::uint64_t* m_Natives;
         std::uint32_t m_ProcCount;
         char m_Pad1[0x04];
@@ -23,45 +23,41 @@ namespace rage
         std::uint32_t m_NameHash;
         std::uint32_t m_RefCount;
         const char* m_Name;
-        const char** m_Strings;
-        std::uint32_t m_StringCount;
-        char m_Breakpoints[0x0C];
+        const char** m_StringPages;
+        std::uint32_t m_StringsSize;
+        bool m_Breakpoints[12];
 
-        std::uint32_t GetNumCodeBlocks() const
+        std::uint32_t GetNumCodePages() const
         {
             return (m_CodeSize + 0x3FFF) >> 14;
         }
 
-        std::uint32_t GetCodeBlockSize(std::uint32_t block) const
+        std::uint32_t GetCodePageSize(std::uint32_t page) const
         {
-            auto num = GetNumCodeBlocks();
-            if (block < num)
+            auto num = GetNumCodePages();
+            if (page < num)
             {
-                if (block == num - 1)
+                if (page == num - 1)
                     return (m_CodeSize & 0x3FFF);
+
                 return 0x4000;
             }
 
             return 0;
         }
 
-        std::uint8_t* GetCodeBlock(std::uint32_t block) const
+        std::uint8_t* GetCodePage(std::uint32_t page) const
         {
-            return m_CodeBlocks[block];
+            if (page < GetNumCodePages())
+                return m_CodePages[page];
+
+            return nullptr;
         }
 
         std::uint8_t* GetCode(std::uint32_t index) const
         {
             if (index < m_CodeSize)
-                return &m_CodeBlocks[index >> 14][index & 0x3FFF];
-
-            return nullptr;
-        }
-
-        scrValue* GetStatic(std::uint32_t index) const
-        {
-            if (index < m_StaticCount)
-                return &m_Statics[index];
+                return &m_CodePages[index >> 14][index & 0x3FFF];
 
             return nullptr;
         }
@@ -71,74 +67,82 @@ namespace rage
             return (m_GlobalCountAndBlock & 0x3FFFF);
         }
 
-        std::uint32_t GetGlobalBlockIndex() const
+        std::uint32_t GetGlobalBlock() const
         {
             return (m_GlobalCountAndBlock >> 0x12);
         }
 
-        std::uint32_t GetNumGlobalBlocks() const
+        std::uint32_t GetNumGlobalPages() const
         {
             return ((m_GlobalCountAndBlock & 0x3FFFF) + 0x3FFF) >> 14;
         }
 
-        std::uint32_t GetGlobalBlockSize(std::uint32_t block) const
+        std::uint32_t GetGlobalPageSize(std::uint32_t page) const
         {
-            auto num = GetNumGlobalBlocks();
-            if (block < num)
+            auto num = GetNumGlobalPages();
+            if (page < num)
             {
-                if (block == num - 1)
-                    return (m_GlobalCountAndBlock & 0x3FFFF) - (block << 14);
+                if (page == num - 1)
+                    return (m_GlobalCountAndBlock & 0x3FFFF) - (page << 14);
+
                 return 0x4000;
             }
 
             return 0;
         }
 
-        scrValue* GetGlobalBlock(std::uint32_t block) const
+        scrValue* GetGlobalBlock(std::uint32_t page) const
         {
-            return m_Globals[block];
+            if (page < GetNumGlobalPages())
+                return m_GlobalPages[page];
+
+            return nullptr;
         }
 
         scrValue* GetGlobal(std::uint32_t index) const
         {
             if (index < GetGlobalCount())
-                return &m_Globals[index >> 0x12 & 0x3F][index & 0x3FFFF];
+                return &m_GlobalPages[index >> 0x12 & 0x3F][index & 0x3FFFF];
 
             return nullptr;
         }
 
-        std::uint32_t GetNumStringBlocks() const
+        std::uint32_t GetNumStringPages() const
         {
-            return (m_StringCount + 0x3FFF) >> 14;
+            return (m_StringsSize + 0x3FFF) >> 14;
         }
 
-        std::uint32_t GetStringBlockSize(std::uint32_t block) const
+        std::uint32_t GetStringPageSize(std::uint32_t page) const
         {
-            auto num = GetNumStringBlocks();
-            if (block < num)
+            auto num = GetNumStringPages();
+            if (page < num)
             {
-                if (block == num - 1)
-                    return (m_StringCount & 0x3FFF);
+                if (page == num - 1)
+                    return (m_StringsSize & 0x3FFF);
+
                 return 0x4000;
             }
 
             return 0;
         }
 
-        const char* GetStringBlock(std::uint32_t block) const
+        const char* GetStringPage(std::uint32_t page) const
         {
-            return m_Strings[block];
-        }
-
-        const char* GetString(std::uint32_t index) const
-        {
-            if (index < m_StringCount)
-                return &m_Strings[index >> 14][index & 0x3FFF];
+            if (page < GetNumStringPages())
+                return m_StringPages[page];
 
             return nullptr;
         }
 
-        static scrProgram* FindScriptProgram(std::uint32_t hash);
+        const char* GetString(std::uint32_t index) const
+        {
+            if (index < m_StringsSize)
+                return &m_StringPages[index >> 14][index & 0x3FFF];
+
+            return nullptr;
+        }
+
+        static scrProgram* GetProgram(std::uint32_t hash);
     };
     static_assert(sizeof(scrProgram) == 0x80);
 }

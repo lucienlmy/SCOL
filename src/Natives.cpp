@@ -367,7 +367,7 @@ namespace SCOL::Natives
     {
         auto hash = ctx->m_Args[0].Int;
 
-        if (auto thread = rage::scrThread::FindScriptThread(hash))
+        if (auto thread = rage::scrThread::GetThread(hash))
         {
             rage::tlsContext::Get()->m_CurrentScriptThread = thread;
             rage::tlsContext::Get()->m_ScriptThreadActive = true;
@@ -382,10 +382,8 @@ namespace SCOL::Natives
         if (state < rage::scrThreadState::RUNNING || state > rage::scrThreadState::PAUSED)
             return;
 
-        if (auto thread = rage::scrThread::FindScriptThread(hash))
-        {
+        if (auto thread = rage::scrThread::GetThread(hash))
             thread->m_Context.m_State = static_cast<rage::scrThreadState>(state);
-        }
     }
 
     static void NativeCommandScriptStaticSetInt(rage::scrNativeCallContext* ctx)
@@ -394,10 +392,8 @@ namespace SCOL::Natives
         auto index = ctx->m_Args[1].Int;
         auto value = ctx->m_Args[2].Int;
 
-        if (auto thread = rage::scrThread::FindScriptThread(hash))
-        {
+        if (auto thread = rage::scrThread::GetThread(hash))
             thread->m_Stack[index].Int = value;
-        }
     }
 
     static void NativeCommandScriptStaticSetFloat(rage::scrNativeCallContext* ctx)
@@ -406,10 +402,8 @@ namespace SCOL::Natives
         auto index = ctx->m_Args[1].Int;
         auto value = ctx->m_Args[2].Float;
 
-        if (auto thread = rage::scrThread::FindScriptThread(hash))
-        {
+        if (auto thread = rage::scrThread::GetThread(hash))
             thread->m_Stack[index].Float = value;
-        }
     }
 
     static void NativeCommandScriptStaticSetString(rage::scrNativeCallContext* ctx)
@@ -418,10 +412,8 @@ namespace SCOL::Natives
         auto index = ctx->m_Args[1].Int;
         auto value = ctx->m_Args[2].String;
 
-        if (auto thread = rage::scrThread::FindScriptThread(hash))
-        {
+        if (auto thread = rage::scrThread::GetThread(hash))
             thread->m_Stack[index].String = value;
-        }
     }
 
     static void NativeCommandScriptStaticSetTextLabel(rage::scrNativeCallContext* ctx)
@@ -431,7 +423,7 @@ namespace SCOL::Natives
         auto value = ctx->m_Args[2].String;
         auto size = ctx->m_Args[3].Int;
 
-        if (auto thread = rage::scrThread::FindScriptThread(hash))
+        if (auto thread = rage::scrThread::GetThread(hash))
         {
             auto dest = reinterpret_cast<char*>(&thread->m_Stack[index]);
             std::strncpy(dest, value, size - 1);
@@ -447,7 +439,7 @@ namespace SCOL::Natives
         auto valueY = ctx->m_Args[3].Float;
         auto valueZ = ctx->m_Args[4].Float;
 
-        if (auto thread = rage::scrThread::FindScriptThread(hash))
+        if (auto thread = rage::scrThread::GetThread(hash))
         {
             thread->m_Stack[index + 0].Float = valueX;
             thread->m_Stack[index + 1].Float = valueY;
@@ -461,10 +453,8 @@ namespace SCOL::Natives
         auto index = ctx->m_Args[1].Int;
 
         std::int32_t retVal{};
-        if (auto thread = rage::scrThread::FindScriptThread(hash))
-        {
+        if (auto thread = rage::scrThread::GetThread(hash))
             retVal = thread->m_Stack[index].Int;
-        }
 
         ctx->m_ReturnValue->Int = retVal;
     }
@@ -475,10 +465,8 @@ namespace SCOL::Natives
         auto index = ctx->m_Args[1].Int;
 
         float retVal{};
-        if (auto thread = rage::scrThread::FindScriptThread(hash))
-        {
+        if (auto thread = rage::scrThread::GetThread(hash))
             retVal = thread->m_Stack[index].Float;
-        }
 
         ctx->m_ReturnValue->Float = retVal;
     }
@@ -489,10 +477,8 @@ namespace SCOL::Natives
         auto index = ctx->m_Args[1].Int;
 
         const char* retVal{""};
-        if (auto thread = rage::scrThread::FindScriptThread(hash))
-        {
+        if (auto thread = rage::scrThread::GetThread(hash))
             retVal = thread->m_Stack[index].String;
-        }
 
         ctx->m_ReturnValue->String = retVal;
     }
@@ -503,10 +489,8 @@ namespace SCOL::Natives
         auto index = ctx->m_Args[1].Int;
 
         char* retVal{};
-        if (auto thread = rage::scrThread::FindScriptThread(hash))
-        {
+        if (auto thread = rage::scrThread::GetThread(hash))
             retVal = reinterpret_cast<char*>(&thread->m_Stack[index]);
-        }
 
         ctx->m_ReturnValue->String = retVal ? retVal : "";
     }
@@ -517,7 +501,7 @@ namespace SCOL::Natives
         auto index = ctx->m_Args[1].Int;
 
         rage::scrVector retVal{};
-        if (auto thread = rage::scrThread::FindScriptThread(hash))
+        if (auto thread = rage::scrThread::GetThread(hash))
         {
             retVal.x = thread->m_Stack[index + 0].Float;
             retVal.y = thread->m_Stack[index + 1].Float;
@@ -535,10 +519,8 @@ namespace SCOL::Natives
         auto index = ctx->m_Args[1].Int;
 
         std::uint64_t retVal{};
-        if (auto thread = rage::scrThread::FindScriptThread(hash))
-        {
+        if (auto thread = rage::scrThread::GetThread(hash))
             retVal = reinterpret_cast<std::uint64_t>(&thread->m_Stack[index]);
-        }
 
         ctx->m_ReturnValue->Any = retVal;
     }

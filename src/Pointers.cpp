@@ -28,10 +28,6 @@ namespace SCOL
             RegisterScriptHandler = addr.Add(0xB).Rip().As<Functions::RegisterScriptHandler>();
         });
 
-        scanner.Add("KillGtaThread", "48 89 F2 FF 50 ? 0F BE 86", [this](Memory addr) {
-            KillGtaThread = addr.Sub(0x21).As<Functions::KillGtaThread>();
-        });
-
         scanner.Add("ScriptThreads", "48 8B 05 ? ? ? ? 48 89 34 F8 48 FF C7 48 39 FB 75 97", [this](Memory addr) {
             ScriptThreads = addr.Add(3).Rip().As<rage::atArray<rage::scrThread*>*>();
         });
@@ -62,10 +58,6 @@ namespace SCOL
 
         scanner.Add("StartNewGtaThread", "E8 ? ? ? ? 89 46 ? 89 C1 E8 ? ? ? ? 48 89 46", [this](Memory addr) {
             StartNewGtaThread = addr.Add(1).Rip().As<PVOID>();
-        });
-
-        scanner.Add("scrProgramDtor", "8B 56 ? 83 E2 1F", [this](Memory addr) {
-            scrProgramDtor = addr.Sub(0x22).As<Functions::scrProgramDtor>();
         });
 
         return scanner.Scan();

@@ -28,7 +28,7 @@ namespace SCOL
         }
         LOGF(INFO, "Hooking initialized.");
 
-        while (!rage::scrThread::FindScriptThread("Startup"_J))
+        while (!rage::scrThread::GetThread("Startup"_J))
             std::this_thread::sleep_for(100ms);
 
         Natives::RegisterNatives();

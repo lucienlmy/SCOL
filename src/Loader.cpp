@@ -12,10 +12,10 @@ namespace SCOL::Loader
     {
         if (auto id = g_Pointers.LoadAndStartScriptObj(path, args, argCount * sizeof(rage::scrValue), stackSize))
         {
-            if (auto thread = reinterpret_cast<GtaThread*>(rage::scrThread::FindScriptThreadById(id)))
+            if (auto gtaThread = reinterpret_cast<GtaThread*>(rage::scrThread::GetThreadById(id)))
             {
-                g_Pointers.RegisterScriptHandler(g_Pointers.ScriptHandlerMgrPtr, thread);
-                Natives::CleanupScriptLog(thread->m_ScriptHash);
+                g_Pointers.RegisterScriptHandler(g_Pointers.ScriptHandlerMgrPtr, gtaThread);
+                Natives::CleanupScriptLog(gtaThread->m_ScriptHash2);
 
                 return id; // Don't push this to scriptThreadIds, we don't want to allow reloading script overrides
             }
@@ -60,18 +60,18 @@ namespace SCOL::Loader
 
         for (auto id : scriptThreadIds)
         {
-            if (auto thread = reinterpret_cast<GtaThread*>(rage::scrThread::FindScriptThreadById(id)))
+            if (auto gtaThread = reinterpret_cast<GtaThread*>(rage::scrThread::GetThreadById(id)))
             {
-                if (auto data = Settings::GetScriptData(thread->m_ScriptName); data.CleanupFunction != 0)
+                if (auto data = Settings::GetScriptData(gtaThread->m_ScriptName); data.CleanupFunction != 0)
                 {
-                    ScriptFunction::Call(thread->m_ScriptHash, data.CleanupFunction); // We assume the function doesn't take any arguments. Return type doesn't matter.
+                    ScriptFunction::Call(gtaThread->m_ScriptHash2, data.CleanupFunction); // We assume the function doesn't take any arguments. Return type doesn't matter.
                 }
 
                 // Even if a script calls TERMINATE_THIS_THREAD (which internally calls scrThread::Kill),
                 // it only sets the thread state to KILLED if the thread is the current thread and does
                 // not release the script program. We call KillGtaThread here to ensure that the program is
                 // released, so that AllocateGlobalBlock is called for the next load, which we need in order to reset globals.
-                g_Pointers.KillGtaThread(thread); // thread->Kill();
+                gtaThread->Kill();
                 LOGF(INFO, "Killed thread with ID {}.", id);
             }
         }

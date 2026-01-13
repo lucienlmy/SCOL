@@ -19,10 +19,8 @@ namespace SCOL
         using RegisterNativeCommand = void (*)(PVOID table, rage::scrNativeHash hash, rage::scrNativeHandler handler);
         using LoadAndStartScriptObj = std::uint32_t (*)(const char* path, PVOID args, std::uint32_t argCount, std::uint32_t stackSize);
         using RegisterScriptHandler = std::uint32_t (*)(PVOID _this, GtaThread* thread);
-        using KillGtaThread = void (*)(GtaThread* thread);
         using sysVirtualFree = bool (*)(void* ptr);
         using RunScriptThread = rage::scrThreadState (*)(rage::scrValue* stack, rage::scrValue** globals, rage::scrProgram* program, rage::scrThreadContext* context);
-        using scrProgramDtor = void (*)(rage::scrProgram* _this);
     }
 
     struct PointerData
@@ -33,7 +31,6 @@ namespace SCOL
         Functions::LoadAndStartScriptObj LoadAndStartScriptObj; // I need to come up with a better name for this lol
         PVOID ScriptHandlerMgrPtr;
         Functions::RegisterScriptHandler RegisterScriptHandler;
-        Functions::KillGtaThread KillGtaThread;
         rage::atArray<rage::scrThread*>* ScriptThreads;
         PVOID AllocateGlobalBlock;
         rage::scrValue** ScriptGlobals;
@@ -42,7 +39,6 @@ namespace SCOL
         rage::scrProgram** ScriptPrograms;
         Functions::RunScriptThread RunScriptThread;
         PVOID StartNewGtaThread;
-        Functions::scrProgramDtor scrProgramDtor;
     };
 
     struct Pointers : PointerData

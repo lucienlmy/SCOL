@@ -17,13 +17,13 @@ namespace SCOL
 
     static void AllocateGlobalBlockDetour(rage::scrProgram* program)
     {
-        const auto idx = program->GetGlobalBlockIndex();
-        if (g_Pointers.ScriptGlobals[idx] != nullptr)
+        const auto block = program->GetGlobalBlock();
+        if (g_Pointers.ScriptGlobals[block] != nullptr)
         {
-            LOGF(INFO, "Global block {} has already been allocated, freeing it.", idx);
+            LOGF(INFO, "Global block {} has already been allocated, freeing it.", block);
 
-            g_Pointers.sysVirtualFree(g_Pointers.ScriptGlobals[idx]);
-            g_Pointers.ScriptGlobals[idx] = nullptr;
+            g_Pointers.sysVirtualFree(g_Pointers.ScriptGlobals[block]);
+            g_Pointers.ScriptGlobals[block] = nullptr;
         }
 
         Hooking::GetOriginal<decltype(&AllocateGlobalBlockDetour)>("AllocateGlobalBlockHook")(program);
@@ -33,8 +33,11 @@ namespace SCOL
     {
         if (auto path = Loader::GetScriptOverridePath(programHash); !path.empty())
         {
-            if (auto program = rage::scrProgram::FindScriptProgram(programHash))
-                g_Pointers.scrProgramDtor(program); // Free the program loaded by natives first, LoadAndStartScriptObj will create a new one from the SCO
+            if (auto program = rage::scrProgram::GetProgram(programHash))
+            {
+                auto destructor = *(*reinterpret_cast<void***>(program) + 6);
+                reinterpret_cast<void (*)(rage::scrProgram*, bool)>(destructor)(program, true); // Free the program loaded by natives first, LoadAndStartScriptObj will create a new one from the SCO
+            }
 
             if (auto id = Loader::LoadScript(path.c_str(), args, argCount, stackSize))
             {

@@ -7,6 +7,13 @@ class CGameScriptHandlerNetComponent;
 class GtaThread : public rage::scrThread
 {
 public:
+    virtual ~GtaThread() = default;
+    virtual void Reset(std::uint32_t programHash, void* args, std::uint32_t argCount) = 0;
+    virtual rage::scrThreadState Run() = 0;
+    virtual rage::scrThreadState Update() = 0;
+    virtual void Kill() = 0;
+    virtual void GetInfo(void* info) = 0;
+
     CGameScriptHandler* m_Handler;
     CGameScriptHandlerNetComponent* m_NetComponent;
     std::uint32_t m_ScriptHash2;

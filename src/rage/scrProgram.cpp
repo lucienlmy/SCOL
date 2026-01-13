@@ -3,7 +3,7 @@
 
 namespace rage
 {
-    scrProgram* scrProgram::FindScriptProgram(std::uint32_t hash)
+    scrProgram* scrProgram::GetProgram(std::uint32_t hash)
     {
         for (int i = 0; i < 176; i++)
         {
