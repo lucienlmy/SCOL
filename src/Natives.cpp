@@ -4,6 +4,7 @@
 #include "ScriptFunction.hpp"
 #include "rage/scrThread.hpp"
 #include "rage/tlsContext.hpp"
+#include <nlohmann/json.hpp>
 
 namespace SCOL::Natives
 {
@@ -14,6 +15,16 @@ namespace SCOL::Natives
 
     // Core
     static constexpr rage::scrNativeHash LOG_TO_FILE                                       = 0x7F41C15A89FDEE9F;
+
+    // JSON
+    static constexpr rage::scrNativeHash JSON_SET_INT                                      = 0x669CB77130D296AD;
+    static constexpr rage::scrNativeHash JSON_SET_BOOL                                     = 0xF800174D11572F70;
+    static constexpr rage::scrNativeHash JSON_SET_FLOAT                                    = 0x851E3C7AB9BB63E5;
+    static constexpr rage::scrNativeHash JSON_SET_STRING                                   = 0xDA71BF7EDA3632C8;
+    static constexpr rage::scrNativeHash JSON_GET_INT                                      = 0xCA18D380BB30B3EE;
+    static constexpr rage::scrNativeHash JSON_GET_BOOL                                     = 0xB343A4FE9DC54F35;
+    static constexpr rage::scrNativeHash JSON_GET_FLOAT                                    = 0xEC9BEF67DB133874;
+    static constexpr rage::scrNativeHash JSON_GET_STRING                                   = 0x77A722DEBCB308CB;
 
     // Memory
     static constexpr rage::scrNativeHash MEMORY_SCAN_PATTERN                               = 0x0E7D68BA1B32BA2A;
@@ -119,6 +130,95 @@ namespace SCOL::Natives
         }
     };
 
+    class ScriptJSON
+    {
+    public:
+        template <typename T>
+        void Set(const char* section, const char* key, T value)
+        {
+            m_JSON[section][key] = value;
+            Save();
+        }
+
+        template <typename T>
+        T Get(const char* section, const char* key, T _default)
+        {
+            auto& sec = m_JSON[section];
+            if (!sec.contains(key))
+            {
+                sec[key] = _default;
+                Save();
+                return _default;
+            }
+
+            try
+            {
+                return sec[key].get<T>();
+            }
+            catch (...) // in case the value is malformed
+            {
+                sec[key] = _default;
+                Save();
+                return _default;
+            }
+        }
+
+        static ScriptJSON& GetOrCreate()
+        {
+            auto hash = rage::tlsContext::Get()->m_CurrentScriptThread->m_ScriptHash;
+            auto name = rage::tlsContext::Get()->m_CurrentScriptThread->m_ScriptName;
+
+            auto it = m_ScriptJSONs.find(hash);
+            if (it != m_ScriptJSONs.end())
+                return it->second;
+
+            auto path = std::filesystem::path(g_Variables.ScriptsFolder) / (std::string(name) + ".json");
+
+            it = m_ScriptJSONs.emplace(std::make_pair(hash, ScriptJSON(path))).first;
+            return it->second;
+        }
+
+        static void Remove(joaat_t hash)
+        {
+            if (auto it = m_ScriptJSONs.find(hash); it != m_ScriptJSONs.end())
+                m_ScriptJSONs.erase(it);
+        }
+
+    private:
+        ScriptJSON(const std::filesystem::path& path)
+            : m_Path(path)
+        {
+            std::ifstream file(m_Path);
+            if (file.is_open())
+            {
+                try
+                {
+                    file >> m_JSON;
+                }
+                catch (...)
+                {
+                    m_JSON = nlohmann::json::object();
+                }
+            }
+            else
+            {
+                m_JSON = nlohmann::json::object();
+                Save();
+            }
+        }
+
+        void Save() // TO-DO: consider making saving a separate native
+        {
+            std::ofstream file(m_Path);
+            file << m_JSON.dump(4);
+        }
+
+        std::filesystem::path m_Path;
+        nlohmann::json m_JSON;
+
+        static inline std::unordered_map<joaat_t, ScriptJSON> m_ScriptJSONs;
+    };
+
     static ScriptFunctionCallContext scrFunctionCallContext;
     static std::unordered_map<joaat_t, std::ofstream> scriptLogs;
 
@@ -129,8 +229,14 @@ namespace SCOL::Natives
         {
             it->second.close();
             scriptLogs.erase(it);
-            LOGF(INFO, "Closed log file for script with hash 0x{:X}.", scriptHash);
         }
+    }
+
+    void CleanupScriptResources(joaat_t scriptHash)
+    {
+        CleanupScriptLog(scriptHash);
+        ScriptJSON::Remove(scriptHash);
+        LOGF(INFO, "Cleaned up resources for script with hash 0x{:X}.", scriptHash);
     }
 
     static void NativeCommandLogToFile(rage::scrNativeCallContext* ctx)
@@ -176,6 +282,97 @@ namespace SCOL::Natives
 
         logFile << std::endl;
         logFile.flush();
+    }
+
+    static void NativeCommandJSONSetInt(rage::scrNativeCallContext* ctx)
+    {
+        auto section = ctx->m_Args[0].String;
+        auto key = ctx->m_Args[1].String;
+        auto value = ctx->m_Args[2].Int;
+
+        auto& json = ScriptJSON::GetOrCreate();
+        json.Set(section, key, value);
+    }
+
+    static void NativeCommandJSONSetBool(rage::scrNativeCallContext* ctx)
+    {
+        auto section = ctx->m_Args[0].String;
+        auto key = ctx->m_Args[1].String;
+        auto value = ctx->m_Args[2].Int;
+
+        auto& json = ScriptJSON::GetOrCreate();
+        json.Set(section, key, static_cast<bool>(value));
+    }
+
+    static void NativeCommandJSONSetFloat(rage::scrNativeCallContext* ctx)
+    {
+        auto section = ctx->m_Args[0].String;
+        auto key = ctx->m_Args[1].String;
+        auto value = ctx->m_Args[2].Float;
+
+        auto& json = ScriptJSON::GetOrCreate();
+        json.Set(section, key, value);
+    }
+
+    static void NativeCommandJSONSetString(rage::scrNativeCallContext* ctx)
+    {
+        auto section = ctx->m_Args[0].String;
+        auto key = ctx->m_Args[1].String;
+        auto value = ctx->m_Args[2].String;
+
+        auto& json = ScriptJSON::GetOrCreate();
+        json.Set(section, key, value);
+    }
+
+    static void NativeCommandJSONGetInt(rage::scrNativeCallContext* ctx)
+    {
+        auto section = ctx->m_Args[0].String;
+        auto key = ctx->m_Args[1].String;
+        auto _default = ctx->m_Args[2].Int;
+
+        auto& json = ScriptJSON::GetOrCreate();
+        ctx->m_ReturnValue->Int = json.Get(section, key, _default);
+    }
+
+    static void NativeCommandJSONGetBool(rage::scrNativeCallContext* ctx)
+    {
+        auto section = ctx->m_Args[0].String;
+        auto key = ctx->m_Args[1].String;
+        auto _default = ctx->m_Args[2].Int;
+
+        auto& json = ScriptJSON::GetOrCreate();
+        ctx->m_ReturnValue->Int = json.Get(section, key, static_cast<bool>(_default));
+    }
+
+    static void NativeCommandJSONGetFloat(rage::scrNativeCallContext* ctx)
+    {
+        auto section = ctx->m_Args[0].String;
+        auto key = ctx->m_Args[1].String;
+        auto _default = ctx->m_Args[2].Float;
+
+        auto& json = ScriptJSON::GetOrCreate();
+        ctx->m_ReturnValue->Float = json.Get(section, key, _default);
+    }
+
+    static void NativeCommandJSONGetString(rage::scrNativeCallContext* ctx)
+    {
+        auto section = ctx->m_Args[0].String;
+        auto key = ctx->m_Args[1].String;
+        auto value = ctx->m_Args[2].Reference;
+        auto _default = ctx->m_Args[3].String;
+
+        auto& json = ScriptJSON::GetOrCreate();
+        auto dest = reinterpret_cast<char*>(value);
+        auto src = json.Get(section, key, std::string(_default));
+        auto size = src.size();
+
+        if (size > 63)
+            size = 63;
+
+        // We don't return a string because its lifetime wouldn't be guaranteed
+        // Since the max native return count is 3, we can't return a text label, so we pass it as an argument instead
+        std::strncpy(dest, src.c_str(), size);
+        dest[size] = '\0';
     }
 
     static void NativeCommandMemoryScanPattern(rage::scrNativeCallContext* ctx)
@@ -425,6 +622,9 @@ namespace SCOL::Natives
 
         if (auto thread = rage::scrThread::GetThread(hash))
         {
+            if (size > 63)
+                size = 63;
+
             auto dest = reinterpret_cast<char*>(&thread->m_Stack[index]);
             std::strncpy(dest, value, size - 1);
             dest[size - 1] = '\0';
@@ -546,6 +746,9 @@ namespace SCOL::Natives
         auto index = ctx->m_Args[0].Int;
         auto value = ctx->m_Args[1].String;
         auto size = ctx->m_Args[2].Int;
+
+        if (size > 63)
+            size = 63;
 
         auto dest = reinterpret_cast<char*>(&g_Pointers.ScriptGlobals[index >> 0x12 & 0x3F][index & 0x3FFFF]);
         std::strncpy(dest, value, size - 1);
@@ -694,6 +897,15 @@ namespace SCOL::Natives
         // clang-format off
 
         RegisterNative(LOG_TO_FILE,                                       NativeCommandLogToFile);
+
+        RegisterNative(JSON_SET_INT,                                      NativeCommandJSONSetInt);
+        RegisterNative(JSON_SET_BOOL,                                     NativeCommandJSONSetBool);
+        RegisterNative(JSON_SET_FLOAT,                                    NativeCommandJSONSetFloat);
+        RegisterNative(JSON_SET_STRING,                                   NativeCommandJSONSetString);
+        RegisterNative(JSON_GET_INT,                                      NativeCommandJSONGetInt);
+        RegisterNative(JSON_GET_BOOL,                                     NativeCommandJSONGetBool);
+        RegisterNative(JSON_GET_FLOAT,                                    NativeCommandJSONGetFloat);
+        RegisterNative(JSON_GET_STRING,                                   NativeCommandJSONGetString);
 
         RegisterNative(MEMORY_SCAN_PATTERN,                               NativeCommandMemoryScanPattern);
         RegisterNative(MEMORY_ADD,                                        NativeCommandMemoryAdd);

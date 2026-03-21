@@ -42,6 +42,145 @@ LOG_TO_FILE("Hello from script ", GET_THIS_SCRIPT_NAME(), ". Int=", iInt, " Floa
 
 ---
 
+### `NATIVE PROC JSON_SET_INT(STRING section, STRING key, INT value) = "0x669CB77130D296AD"`
+
+Writes an integer value to the JSON file under the specified section and key. Creates the section/key if they do not exist. Each script has its own JSON file, which is automatically created the first time a JSON command is used, if it does not already exist.
+
+- **Parameters:**
+  - `section (STRING)`: The section name.
+  - `key (STRING)`: The key within the section.
+  - `value (INT)`: The value to write.
+
+**Example Usage:**
+```
+JSON_SET_INT("Player", "Health", 100)
+```
+
+---
+
+### `NATIVE PROC JSON_SET_BOOL(STRING section, STRING key, BOOL value) = "0xF800174D11572F70"`
+
+Writes a boolean value to the JSON file under the specified section and key. Creates the section/key if they do not exist.
+
+- **Parameters:**
+  - `section (STRING)`: The section name.
+  - `key (STRING)`: The key within the section.
+  - `value (BOOL)`: The value to write.
+
+**Example Usage:**
+```
+JSON_SET_BOOL("Settings", "GodMode", TRUE)
+```
+
+---
+
+### `NATIVE PROC JSON_SET_FLOAT(STRING section, STRING key, FLOAT value) = "0x851E3C7AB9BB63E5"`
+
+Writes a float value to the JSON file under the specified section and key. Creates the section/key if they do not exist.
+
+- **Parameters:**
+  - `section (STRING)`: The section name.
+  - `key (STRING)`: The key within the section.
+  - `value (FLOAT)`: The value to write.
+
+**Example Usage:**
+```
+JSON_SET_FLOAT("Player", "Speed", 1.25)
+```
+
+---
+
+### `NATIVE PROC JSON_SET_STRING(STRING section, STRING key, STRING value) = "0xDA71BF7EDA3632C8"`
+
+Writes a string value to the JSON file under the specified section and key. Creates the section/key if they do not exist.
+
+- **Parameters:**
+  - `section (STRING)`: The section name.
+  - `key (STRING)`: The key within the section.
+  - `value (STRING)`: The value to write.
+
+**Example Usage:**
+```
+JSON_SET_STRING("Player", "Name", "Arthur")
+```
+
+---
+
+### `NATIVE FUNC INT JSON_GET_INT(STRING section, STRING key, INT _default) = "0xCA18D380BB30B3EE"`
+
+Reads an integer value from the JSON file. If the section or key does not exist, the provided default value is returned.
+
+- **Parameters:**
+  - `section (STRING)`: The section name.
+  - `key (STRING)`: The key within the section.
+  - `_default (INT)`: Value returned if the key is missing.
+
+- **Returns:**
+  - `INT`: The retrieved value or `_default`.
+
+**Example Usage:**
+```
+INT health = JSON_GET_INT("Player", "Health", 100)
+```
+
+---
+
+### `NATIVE FUNC BOOL JSON_GET_BOOL(STRING section, STRING key, BOOL _default) = "0xB343A4FE9DC54F35"`
+
+Reads a boolean value from the JSON file. If the section or key does not exist, the provided default value is returned.
+
+- **Parameters:**
+  - `section (STRING)`: The section name.
+  - `key (STRING)`: The key within the section.
+  - `_default (BOOL)`: Value returned if the key is missing.
+
+- **Returns:**
+  - `BOOL`: The retrieved value or `_default`.
+
+**Example Usage:**
+```
+BOOL godMode = JSON_GET_BOOL("Settings", "GodMode", FALSE)
+```
+
+---
+
+### `NATIVE FUNC FLOAT JSON_GET_FLOAT(STRING section, STRING key, FLOAT _default) = "0xEC9BEF67DB133874"`
+
+Reads a float value from the JSON file. If the section or key does not exist, the provided default value is returned.
+
+- **Parameters:**
+  - `section (STRING)`: The section name.
+  - `key (STRING)`: The key within the section.
+  - `_default (FLOAT)`: Value returned if the key is missing.
+
+- **Returns:**
+  - `FLOAT`: The retrieved value or `_default`.
+
+**Example Usage:**
+```
+FLOAT speed = JSON_GET_FLOAT("Player", "Speed", 1.0)
+```
+
+---
+
+### `NATIVE PROC JSON_GET_STRING(STRING section, STRING key, TEXT_LABEL_63& value, STRING _default) = "0x77A722DEBCB308CB"`
+
+Reads a string value from the JSON file and writes it into the provided text label. If the section or key does not exist, the provided default value is used instead.
+
+- **Parameters:**
+  - `section (STRING)`: The section name.
+  - `key (STRING)`: The key within the section.
+  - `value (TEXT_LABEL_63&)`: Output buffer that receives the string.
+  - `_default (STRING)`: Value used if the key is missing.
+
+**Example Usage:**
+```
+TEXT_LABEL_63 name
+JSON_GET_STRING("Player", "Name", name, "Unknown")
+```
+
+---
+
 ## `NATIVE FUNC POINTER MEMORY_SCAN_PATTERN(STRING name, STRING pattern) = "0x0E7D68BA1B32BA2A"`
 
 Scans the game process for an IDA-style pattern and returns the found address.

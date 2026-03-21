@@ -15,7 +15,7 @@ namespace SCOL::Loader
             if (auto gtaThread = reinterpret_cast<GtaThread*>(rage::scrThread::GetThreadById(id)))
             {
                 g_Pointers.RegisterScriptHandler(g_Pointers.ScriptHandlerMgrPtr, gtaThread);
-                Natives::CleanupScriptLog(gtaThread->m_ScriptHash2);
+                Natives::CleanupScriptResources(gtaThread->m_ScriptHash);
 
                 return id; // Don't push this to scriptThreadIds, we don't want to allow reloading script overrides
             }
@@ -64,7 +64,7 @@ namespace SCOL::Loader
             {
                 if (auto data = Settings::GetScriptData(gtaThread->m_ScriptName); data.CleanupFunction != 0)
                 {
-                    ScriptFunction::Call(gtaThread->m_ScriptHash2, data.CleanupFunction); // We assume the function doesn't take any arguments. Return type doesn't matter.
+                    ScriptFunction::Call(gtaThread->m_ScriptHash, data.CleanupFunction); // We assume the function doesn't take any arguments. Return type doesn't matter.
                 }
 
                 // Even if a script calls TERMINATE_THIS_THREAD (which internally calls scrThread::Kill),

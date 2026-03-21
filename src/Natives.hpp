@@ -3,5 +3,5 @@
 namespace SCOL::Natives
 {
     void RegisterNatives();
-    void CleanupScriptLog(joaat_t hash);
+    void CleanupScriptResources(joaat_t hash);
 }
