@@ -39,9 +39,9 @@ namespace SCOL
                 reinterpret_cast<void (*)(rage::scrProgram*, bool)>(destructor)(program, true); // Free the program loaded by natives first, LoadAndStartScriptObj will create a new one from the SCO
             }
 
-            if (auto id = Loader::LoadScript(path.c_str(), args, argCount, stackSize))
+            if (auto id = Loader::LoadScript(path, args, argCount, stackSize))
             {
-                LOGF(INFO, "Loaded script override from path '{}'.", path.c_str());
+                LOGF(INFO, "Loaded script override from path '{}'.", path.string().c_str());
                 return id;
             }
         }

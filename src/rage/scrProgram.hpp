@@ -1,4 +1,5 @@
 #pragma once
+#include "atRangeArray.hpp"
 #include "pgBase.hpp"
 #include "scrValue.hpp"
 
@@ -46,14 +47,6 @@ namespace rage
             return 0;
         }
 
-        std::uint8_t* GetCodePage(std::uint32_t page) const
-        {
-            if (page < GetNumCodePages())
-                return m_CodePages[page];
-
-            return nullptr;
-        }
-
         std::uint8_t* GetCode(std::uint32_t index) const
         {
             if (index < m_CodeSize)
@@ -91,14 +84,6 @@ namespace rage
             return 0;
         }
 
-        scrValue* GetGlobalBlock(std::uint32_t page) const
-        {
-            if (page < GetNumGlobalPages())
-                return m_GlobalPages[page];
-
-            return nullptr;
-        }
-
         scrValue* GetGlobal(std::uint32_t index) const
         {
             if (index < GetGlobalCount())
@@ -126,14 +111,6 @@ namespace rage
             return 0;
         }
 
-        const char* GetStringPage(std::uint32_t page) const
-        {
-            if (page < GetNumStringPages())
-                return m_StringPages[page];
-
-            return nullptr;
-        }
-
         const char* GetString(std::uint32_t index) const
         {
             if (index < m_StringsSize)
@@ -143,6 +120,46 @@ namespace rage
         }
 
         static scrProgram* GetProgram(std::uint32_t hash);
+        static void InsertProgram(scrProgram* program);
     };
     static_assert(sizeof(scrProgram) == 0x80);
+
+    class scrProgramRegistry
+    {
+    public:
+        std::uint8_t m_NextFreeSlot;
+        atRangeArray<std::uint8_t, 32> m_BucketHeads;
+        atRangeArray<std::uint8_t, 176> m_NextInChain;
+        atRangeArray<scrProgram*, 176> m_Programs;
+
+        scrProgram* Find(std::uint32_t hash)
+        {
+            auto index = m_BucketHeads.m_Data[hash & 0x1F];
+
+            while (index)
+            {
+                if (m_Programs.m_Data[index]->m_NameHash == hash)
+                    return m_Programs.m_Data[index];
+
+                if (!m_NextInChain.m_Data[index])
+                    break;
+
+                index = m_NextInChain.m_Data[index];
+            }
+
+            return nullptr;
+        }
+
+        void Insert(scrProgram* program)
+        {
+            auto bucket = program->m_NameHash & 0x1F;
+            auto next = m_NextInChain.m_Data[m_NextFreeSlot];
+
+            m_NextInChain.m_Data[m_NextFreeSlot] = m_BucketHeads.m_Data[bucket];
+            m_BucketHeads.m_Data[bucket] = m_NextFreeSlot;
+            m_Programs.m_Data[m_NextFreeSlot] = program;
+            m_NextFreeSlot = next;
+        }
+    };
+    static_assert(sizeof(scrProgramRegistry) == 0x658);
 }

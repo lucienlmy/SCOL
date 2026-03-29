@@ -2,8 +2,8 @@
 
 namespace SCOL::Loader
 {
-    uint32_t LoadScript(const char* path, void* args, uint32_t argCount, uint32_t stackSize);
+    std::uint32_t LoadScript(const std::filesystem::path& path, void* args, std::uint32_t argCount, std::uint32_t stackSize);
     void LoadScripts();
     void ReloadScripts();
-    std::string GetScriptOverridePath(uint32_t hash);
+    std::filesystem::path GetScriptOverridePath(std::uint32_t hash);
 }

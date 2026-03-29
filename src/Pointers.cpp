@@ -33,7 +33,11 @@ namespace SCOL
         });
 
         scanner.Add("AllocateGlobalBlock", "E8 ? ? ? ? 4C 89 E1 E8 ? ? ? ? 41 BE FF 3F", [this](Memory addr) {
-            AllocateGlobalBlock = addr.Add(1).Rip().As<PVOID>();
+            AllocateGlobalBlock = addr.Add(1).Rip().As<Functions::AllocateGlobalBlock>();
+        });
+
+        scanner.Add("InitNativeTables", "EB 2A 0F 1F 40 00 48 8B 54 17 10", [this](Memory addr) {
+            InitNativeTables = addr.Sub(0x2A).As<Functions::InitNativeTables>();
         });
 
         scanner.Add("ScriptGlobals", "48 8B 8E B8 00 00 00 48 8D 15 ? ? ? ? 49 89 D8", [this](Memory addr) {
@@ -48,8 +52,12 @@ namespace SCOL
             sysVirtualFree = addr.Add(1).Rip().As<Functions::sysVirtualFree>();
         });
 
-        scanner.Add("ScriptPrograms", "48 C7 84 C8 D8 00 00 00 00 00 00 00", [this](Memory addr) {
-            ScriptPrograms = addr.Add(0x13).Add(3).Rip().Add(0xD8).As<rage::scrProgram**>();
+        scanner.Add("ScriptProgramRegistry", "48 C7 84 C8 D8 00 00 00 00 00 00 00", [this](Memory addr) {
+            ScriptProgramRegistry = addr.Add(0x13).Add(3).Rip().As<rage::scrProgramRegistry*>();
+        });
+
+        scanner.Add("ScriptProgramCtor", "E8 ? ? ? ? 8B 6C 24 ? 83 7C 24 ? 00", [this](Memory addr) {
+            ScriptProgramCtor = addr.Add(1).Rip().As<Functions::ScriptProgramCtor>();
         });
 
         scanner.Add("RunScriptThread", "49 63 41 1C", [this](Memory addr) {
@@ -57,7 +65,28 @@ namespace SCOL
         });
 
         scanner.Add("StartNewGtaThread", "E8 ? ? ? ? 89 46 ? 89 C1 E8 ? ? ? ? 48 89 46", [this](Memory addr) {
-            StartNewGtaThread = addr.Add(1).Rip().As<PVOID>();
+            StartNewGtaThread = addr.Add(1).Rip().As<Functions::StartNewGtaThread>();
+        });
+
+        scanner.Add("RegisterIndividualFile", "E8 ? ? ? ? 8B 44 24 ? 89 46 ? 89 05", [this](Memory addr) {
+            RegisterIndividualFile = addr.Add(1).Rip().As<Functions::RegisterIndividualFile>();
+        });
+
+        scanner.Add("InvalidateIndividualFile", "E8 ? ? ? ? 8B 15 ? ? ? ? 03 56 ? 48 8D 0D", [this](Memory addr) {
+            InvalidateIndividualFile = addr.Add(1).Rip().As<Functions::InvalidateIndividualFile>();
+        });
+
+        scanner.Add("StreamingStuff", "48 8D 0D ? ? ? ? 41 B8 ? ? ? ? E8 ? ? ? ? 45 84 F6", [this](Memory addr) {
+            StreamingEngineInfo = addr.Add(3).Rip().As<PVOID>();
+            RequestStreamedObject = addr.Add(0x0D).Add(1).Rip().As<Functions::RequestStreamedObject>();
+            StreamingEngineLoader = addr.Add(0x17).Add(3).Rip().As<PVOID>();
+            LoadAllStreamedObjects = addr.Add(0x20).Add(1).Rip().As<Functions::LoadAllStreamedObjects>();
+        });
+
+        scanner.Add("StreamingStuff2", "E8 ? ? ? ? 8B 56 ? 48 89 D9 45 31 C0", [this](Memory addr) {
+            ClearRequiredFlag = addr.Add(1).Rip().As<Functions::ClearRequiredFlag>();
+            RemoveStreamedObject = addr.Add(0x0E).Add(1).Rip().As<Functions::RemoveStreamedObject>();
+            UnregisterStreamedObject = addr.Add(0x95).Add(1).Rip().As<Functions::UnregisterStreamedObject>();
         });
 
         return scanner.Scan();

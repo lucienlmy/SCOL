@@ -42,6 +42,38 @@ LOG_TO_FILE("Hello from script ", GET_THIS_SCRIPT_NAME(), ". Int=", iInt, " Floa
 
 ---
 
+### `NATIVE FUNC BOOL REGISTER_INDIVIDUAL_FILE(STRING file, STRING relativePath) = "0x383C067F9AA5DBC9"`
+
+Registers an individual file from disk into the game.
+
+- **Parameters:**
+  - `file (STRING)`: The file path.
+  - `relativePath (STRING)`: The file name with extension.
+
+- **Returns:**
+  - `BOOL`: Whether the file was registered successfully.
+
+**Example Usage:**
+```
+BOOL result = REGISTER_INDIVIDUAL_FILE("my_texture_dict.ytd", "my_texture_dict.ytd")
+```
+
+---
+
+### `NATIVE PROC INVALIDATE_INDIVIDUAL_FILE(STRING file) = "0xDCAC1A79714643D7"`
+
+Invalidates an already registered individual file.
+
+- **Parameters:**
+  - `file (STRING)`: The file name.
+
+**Example Usage:**
+```
+INVALIDATE_INDIVIDUAL_FILE("my_texture_dict.ytd")
+```
+
+---
+
 ### `NATIVE PROC JSON_SET_INT(STRING section, STRING key, INT value) = "0x669CB77130D296AD"`
 
 Writes an integer value to the JSON file under the specified section and key. Creates the section/key if they do not exist. Each script has its own JSON file, which is automatically created the first time a JSON command is used, if it does not already exist.

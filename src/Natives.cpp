@@ -15,6 +15,8 @@ namespace SCOL::Natives
 
     // Core
     static constexpr rage::scrNativeHash LOG_TO_FILE                                       = 0x7F41C15A89FDEE9F;
+    static constexpr rage::scrNativeHash REGISTER_INDIVIDUAL_FILE                          = 0x383C067F9AA5DBC9;
+    static constexpr rage::scrNativeHash INVALIDATE_INDIVIDUAL_FILE                        = 0xDCAC1A79714643D7;
 
     // JSON
     static constexpr rage::scrNativeHash JSON_SET_INT                                      = 0x669CB77130D296AD;
@@ -282,6 +284,23 @@ namespace SCOL::Natives
 
         logFile << std::endl;
         logFile.flush();
+    }
+
+    static void NativeCommandRegisterIndividualFile(rage::scrNativeCallContext* ctx)
+    {
+        auto file = ctx->m_Args[0].String;
+        auto relativePath = ctx->m_Args[1].String;
+
+        std::uint32_t index = 0xFFFFFFFF;
+        g_Pointers.RegisterIndividualFile(&index, file, true, relativePath, false, false);
+        ctx->m_ReturnValue->Int = index != 0xFFFFFFFF;
+    }
+
+    static void NativeCommandInvalidateIndividualFile(rage::scrNativeCallContext* ctx)
+    {
+        auto file = ctx->m_Args[0].String;
+
+        g_Pointers.InvalidateIndividualFile(file);
     }
 
     static void NativeCommandJSONSetInt(rage::scrNativeCallContext* ctx)
@@ -897,6 +916,8 @@ namespace SCOL::Natives
         // clang-format off
 
         RegisterNative(LOG_TO_FILE,                                       NativeCommandLogToFile);
+        RegisterNative(REGISTER_INDIVIDUAL_FILE,                          NativeCommandRegisterIndividualFile);
+        RegisterNative(INVALIDATE_INDIVIDUAL_FILE,                        NativeCommandInvalidateIndividualFile);
 
         RegisterNative(JSON_SET_INT,                                      NativeCommandJSONSetInt);
         RegisterNative(JSON_SET_BOOL,                                     NativeCommandJSONSetBool);

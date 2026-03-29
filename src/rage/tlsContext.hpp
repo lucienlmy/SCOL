@@ -2,12 +2,15 @@
 
 namespace rage
 {
+    class sysMemAllocator;
     class scrThread;
 
     class tlsContext
     {
     public:
-        char m_Pad1[0x7A0];
+        char m_Pad1[0x5C0];
+        sysMemAllocator* m_Allocator;
+        char m_Pad2[0x1D8];
         rage::scrThread* m_CurrentScriptThread;
         bool m_ScriptThreadActive;
 
