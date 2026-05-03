@@ -5,9 +5,9 @@ namespace rage
     class alignas(16) Vector3
     {
     public:
-        float x{};
-        float y{};
-        float z{};
+        float x{}; // 00000000
+        float y{}; // 00000004
+        float z{}; // 00000008
 
         constexpr Vector3(float x, float y, float z)
             : x(x),
@@ -74,5 +74,5 @@ namespace rage
             return vec;
         }
     };
-    static_assert(sizeof(Vector3) == 0x10);
+    static_assert(sizeof(Vector3) == 0x00000010);
 };

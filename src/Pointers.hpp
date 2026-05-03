@@ -1,30 +1,25 @@
 #pragma once
-#include "rage/scrNativeCallContext.hpp"
+#include "rage/scrProgram.hpp"
+#include "rage/scrThread.hpp"
 
 namespace rage
 {
     template <typename T>
     class atArray;
-    class scrThread;
-    class scrProgram;
-    class scrProgramRegistry;
-    class scrThreadContext;
-    enum scrThreadState : std::uint32_t;
 }
-class GtaThread;
 
 namespace SCOL
 {
     namespace Functions
     {
-        using RegisterNativeCommand = void (*)(PVOID table, rage::scrNativeHash hash, rage::scrNativeHandler handler);
-        using LoadAndStartScriptObj = std::uint32_t (*)(const char* path, PVOID args, std::uint32_t argCount, std::uint32_t stackSize);
-        using RegisterScriptHandler = std::uint32_t (*)(PVOID _this, GtaThread* thread);
+        using RegisterNativeCommand = void (*)(PVOID table, std::uint64_t hash, rage::scrThread::NativeContext::Handler handler);
+        using LoadScriptProgram = std::uint32_t (*)(const char* path, const char* name);
         using AllocateGlobalBlock = void (*)(rage::scrProgram* program);
         using InitNativeTables = void (*)(rage::scrProgram* program);
+        using rage_new = void* (*)(std::size_t size, std::size_t align, int subAllocator, int a4);
         using sysVirtualFree = bool (*)(void* ptr);
         using ScriptProgramCtor = void (*)(rage::scrProgram* _this, const char* name, std::uint32_t codeSize, std::uint32_t nativeCount, std::uint32_t staticCount, std::uint32_t globalCount, std::uint32_t globalBlock, std::uint32_t stringsSize, std::uint32_t argCount, std::uint32_t globalVersion);
-        using RunScriptThread = rage::scrThreadState (*)(rage::scrValue* stack, rage::scrValue** globals, rage::scrProgram* program, rage::scrThreadContext* context);
+        using RunScriptThread = rage::scrThread::State (*)(rage::scrValue* stack, rage::scrValue** globals, rage::scrProgram* program, rage::scrThread::Context* context);
         using StartNewGtaThread = std::uint32_t (*)(std::uint32_t programHash, PVOID args, std::uint32_t argCount, std::uint32_t stackSize);
         using RegisterIndividualFile = std::uint32_t* (*)(std::uint32_t* result, const char* file, bool quitOnBadVersion, const char* relativePath, bool quitIfMissing, bool overlayIfExists);
         using InvalidateIndividualFile = void (*)(const char* file);
@@ -38,16 +33,16 @@ namespace SCOL
     struct PointerData
     {
         PVOID WndProc;
-        PVOID NativeRegistrationTable;
+        rage::scrNativeRegistration* NativeRegistrationTable;
+        PVOID UpdateScriptThreads;
         Functions::RegisterNativeCommand RegisterNativeCommand;
-        Functions::LoadAndStartScriptObj LoadAndStartScriptObj; // I need to come up with a better name for this lol
-        PVOID ScriptHandlerMgrPtr;
-        Functions::RegisterScriptHandler RegisterScriptHandler;
+        Functions::LoadScriptProgram LoadScriptProgram;
         rage::atArray<rage::scrThread*>* ScriptThreads;
         Functions::AllocateGlobalBlock AllocateGlobalBlock;
         Functions::InitNativeTables InitNativeTables;
         rage::scrValue** ScriptGlobals;
         std::uint32_t* LoadingScreenState;
+        Functions::rage_new rage_new;
         Functions::sysVirtualFree sysVirtualFree;
         rage::scrProgramRegistry* ScriptProgramRegistry;
         Functions::ScriptProgramCtor ScriptProgramCtor;

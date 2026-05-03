@@ -1,14 +1,13 @@
-#include "scrProgram.hpp"
 #include "Pointers.hpp"
 
 namespace rage
 {
-    scrProgram* scrProgram::GetProgram(std::uint32_t hash)
+    scrProgram* scrProgram::GetByHash(std::uint32_t hash)
     {
         return SCOL::g_Pointers.ScriptProgramRegistry->Find(hash);
     }
 
-    void scrProgram::InsertProgram(scrProgram* program)
+    void scrProgram::Add(scrProgram* program)
     {
         SCOL::g_Pointers.ScriptProgramRegistry->Insert(program);
     }

@@ -42,6 +42,17 @@ LOG_TO_FILE("Hello from script ", GET_THIS_SCRIPT_NAME(), ". Int=", iInt, " Floa
 
 ---
 
+### `NATIVE PROC CLEAR_LOG_FILE() = "0x8E45F12A1A2B3C4D"`
+
+Clears the log file for calling script.
+
+**Example Usage:**
+```
+CLEAR_LOG_FILE()
+```
+
+---
+
 ### `NATIVE FUNC BOOL REGISTER_INDIVIDUAL_FILE(STRING file, STRING relativePath) = "0x383C067F9AA5DBC9"`
 
 Registers an individual file from disk into the game.

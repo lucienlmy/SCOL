@@ -1,27 +1,12 @@
-#include "Loader.hpp"
+#include "ScriptLoader.hpp"
 #include "Natives.hpp"
 #include "Pointers.hpp"
 #include "ScriptFile.hpp"
 #include "ScriptFunction.hpp"
-#include "gta/GtaThread.hpp"
-#include "rage/scrProgram.hpp"
-#include "rage/sysMemAllocator.hpp"
-#include "rage/tlsContext.hpp"
 
-namespace SCOL::Loader
+namespace SCOL
 {
-    static std::vector<std::uint32_t> scriptThreadIds{};
-    static std::vector<std::pair<std::uint32_t, std::string>> strIndexes{};
-
-    enum class ScriptType
-    {
-        INVALID,
-        DEFAULT,
-        STREAMED,
-        STREAMED_FULL
-    };
-
-    static std::string RemoveAllExtensions(const std::filesystem::path& path)
+    std::string ScriptLoader::RemoveAllExtensions(const std::filesystem::path& path)
     {
         std::string name = path.filename().string();
         while (!std::filesystem::path(name).extension().empty())
@@ -29,7 +14,7 @@ namespace SCOL::Loader
         return name;
     }
 
-    static ScriptType GetScriptType(const std::filesystem::path& path)
+    ScriptLoader::ScriptType ScriptLoader::GetScriptType(const std::filesystem::path& path)
     {
         auto filename = path.filename().string();
 
@@ -43,12 +28,22 @@ namespace SCOL::Loader
         return ScriptType::INVALID;
     }
 
-    static std::uint32_t LoadDefaultScript(const std::filesystem::path& path, void* args, std::uint32_t argCount, std::uint32_t stackSize)
+    std::uint32_t ScriptLoader::LoadDefaultScript(const std::filesystem::path& path, void* args, std::uint32_t argCount, std::uint32_t stackSize)
     {
-        return g_Pointers.LoadAndStartScriptObj(path.string().c_str(), args, argCount * sizeof(rage::scrValue), stackSize);
+        if (auto programHash = g_Pointers.LoadScriptProgram(path.string().c_str(), path.stem().string().c_str()))
+        {
+            if (auto program = rage::scrProgram::GetByHash(programHash))
+            {
+                program->m_RefCount--; // Due to the same reason explained in LoadStreamedFullScript.
+                return g_Pointers.StartNewGtaThread(programHash, args, argCount * sizeof(rage::scrValue), stackSize);
+            }
+        }
+
+        return 0;
     }
 
-    static std::uint32_t LoadStreamedScript(const std::filesystem::path& path, void* args, std::uint32_t argCount, std::uint32_t stackSize)
+    // TO-DO: Invalidate the script if it is already registered
+    std::uint32_t ScriptLoader::LoadStreamedScript(const std::filesystem::path& path, void* args, std::uint32_t argCount, std::uint32_t stackSize)
     {
         std::uint32_t index = 0xFFFFFFFF;
         g_Pointers.RegisterIndividualFile(&index, path.string().c_str(), true, path.filename().string().c_str(), false, false);
@@ -57,7 +52,7 @@ namespace SCOL::Loader
         {
             g_Pointers.RequestStreamedObject(g_Pointers.StreamingEngineInfo, index, 21);
             g_Pointers.LoadAllStreamedObjects(g_Pointers.StreamingEngineLoader, true);
-            strIndexes.push_back({index, path.filename().string()});
+            m_strIndices.push_back({index, path.filename().string()});
 
             return g_Pointers.StartNewGtaThread(Joaat(path.stem().string().c_str()), args, argCount * sizeof(rage::scrValue), stackSize);
         }
@@ -65,18 +60,18 @@ namespace SCOL::Loader
         return 0;
     }
 
-    static std::uint32_t LoadStreamedFullScript(const std::filesystem::path& path, void* args, std::uint32_t argCount, std::uint32_t stackSize)
+    std::uint32_t ScriptLoader::LoadStreamedFullScript(const std::filesystem::path& path, void* args, std::uint32_t argCount, std::uint32_t stackSize)
     {
         auto scName = RemoveAllExtensions(path);
-        auto program = rage::scrProgram::GetProgram(Joaat(scName));
+        auto program = rage::scrProgram::GetByHash(Joaat(scName));
         if (program)
-            return g_Pointers.StartNewGtaThread(program->m_NameHash, args, argCount, stackSize);
+            return g_Pointers.StartNewGtaThread(program->m_NameHash, args, argCount * sizeof(rage::scrValue), stackSize);
 
         ScriptFile script(path);
         if (!script.IsValid())
             return 0;
 
-        program = reinterpret_cast<rage::scrProgram*>(rage::tlsContext::Get()->m_Allocator->Allocate(sizeof(rage::scrProgram), 16, 0));
+        program = reinterpret_cast<rage::scrProgram*>(g_Pointers.rage_new(sizeof(rage::scrProgram), 16, 0, 0));
         if (!program)
             return 0;
 
@@ -124,9 +119,9 @@ namespace SCOL::Loader
             offset += str.size() + 1;
         }
 
-        rage::scrProgram::InsertProgram(program);
+        rage::scrProgram::Add(program);
 
-        auto id = g_Pointers.StartNewGtaThread(program->m_NameHash, args, argCount, stackSize);
+        auto id = g_Pointers.StartNewGtaThread(program->m_NameHash, args, argCount * sizeof(rage::scrValue), stackSize);
 
         // At this point, the program has two references:
         // 1. Added by the constructor
@@ -137,7 +132,37 @@ namespace SCOL::Loader
         return id;
     }
 
-    std::uint32_t LoadScript(const std::filesystem::path& path, void* args, std::uint32_t argCount, std::uint32_t stackSize)
+    void ScriptLoader::CleanupScripts()
+    {
+        for (auto id : m_ThreadIds)
+        {
+            if (auto thread = rage::scrThread::GetById(id))
+            {
+                if (auto data = Settings::GetScriptData(thread->m_ScriptName); data.CleanupFunction != 0)
+                    ScriptFunction::Call(thread->m_ScriptHash, data.CleanupFunction); // We assume the function doesn't take any arguments. Return type doesn't matter.
+
+                // Even if a script calls TERMINATE_THIS_THREAD (which internally calls scrThread::Kill),
+                // it only sets the thread state to KILLED if the thread is the current thread and does
+                // not release the script program. We call Kill here to ensure that the program is
+                // released, so that AllocateGlobalBlock is called for the next load, which we need in order to reset globals.
+                thread->Kill();
+                LOGF(INFO, "Killed thread with ID {}.", id);
+            }
+        }
+
+        for (auto idx : m_strIndices)
+        {
+            g_Pointers.ClearRequiredFlag(g_Pointers.StreamingEngineInfo, idx.first, 17);
+            g_Pointers.RemoveStreamedObject(g_Pointers.StreamingEngineInfo, idx.first, false);
+            g_Pointers.UnregisterStreamedObject(g_Pointers.StreamingEngineInfo, idx.first);
+            g_Pointers.InvalidateIndividualFile(idx.second.c_str());
+        }
+
+        m_ThreadIds.clear();
+        m_strIndices.clear();
+    }
+
+    std::uint32_t ScriptLoader::LoadScriptImpl(const std::filesystem::path& path, void* args, std::uint32_t argCount, std::uint32_t stackSize)
     {
         std::uint32_t id = 0;
 
@@ -159,18 +184,17 @@ namespace SCOL::Loader
 
         if (id != 0)
         {
-            if (auto gtaThread = reinterpret_cast<GtaThread*>(rage::scrThread::GetThreadById(id)))
-            {
-                g_Pointers.RegisterScriptHandler(g_Pointers.ScriptHandlerMgrPtr, gtaThread);
-                Natives::CleanupScriptResources(gtaThread->m_ScriptHash);
-            }
+            if (auto thread = rage::scrThread::GetById(id))
+                Natives::CleanupScriptResources(thread->m_ScriptHash);
         }
 
-        return id; // Don't push this to scriptThreadIds yet, we don't want to allow reloading script overrides
+        return id; // Don't push this to m_ThreadIds yet, we don't want to allow reloading script overrides.
     }
 
-    void LoadScripts()
+    void ScriptLoader::LoadScriptsImpl()
     {
+        CleanupScripts();
+
         auto scriptsFolder = std::filesystem::absolute(g_Variables.ScriptsFolder);
 
         if (!std::filesystem::exists(scriptsFolder) || !std::filesystem::is_directory(scriptsFolder))
@@ -194,49 +218,13 @@ namespace SCOL::Loader
 
             if (auto id = LoadScript(entry.path(), argCount ? data.Args.data() : nullptr, argCount, data.StackSize))
             {
-                scriptThreadIds.push_back(id);
+                m_ThreadIds.push_back(id);
                 LOGF(INFO, "Started new thread with ID {}.", id);
             }
         }
     }
 
-    void ReloadScripts()
-    {
-        if (*g_Pointers.LoadingScreenState != 0)
-            return;
-
-        for (auto id : scriptThreadIds)
-        {
-            if (auto gtaThread = reinterpret_cast<GtaThread*>(rage::scrThread::GetThreadById(id)))
-            {
-                if (auto data = Settings::GetScriptData(gtaThread->m_ScriptName); data.CleanupFunction != 0)
-                {
-                    ScriptFunction::Call(gtaThread->m_ScriptHash, data.CleanupFunction); // We assume the function doesn't take any arguments. Return type doesn't matter.
-                }
-
-                // Even if a script calls TERMINATE_THIS_THREAD (which internally calls scrThread::Kill),
-                // it only sets the thread state to KILLED if the thread is the current thread and does
-                // not release the script program. We call KillGtaThread here to ensure that the program is
-                // released, so that AllocateGlobalBlock is called for the next load, which we need in order to reset globals.
-                gtaThread->Kill();
-                LOGF(INFO, "Killed thread with ID {}.", id);
-            }
-        }
-
-        for (auto idx : strIndexes)
-        {
-            g_Pointers.ClearRequiredFlag(g_Pointers.StreamingEngineInfo, idx.first, 17);
-            g_Pointers.RemoveStreamedObject(g_Pointers.StreamingEngineInfo, idx.first, false);
-            g_Pointers.UnregisterStreamedObject(g_Pointers.StreamingEngineInfo, idx.first);
-            g_Pointers.InvalidateIndividualFile(idx.second.c_str());
-        }
-
-        scriptThreadIds.clear();
-        strIndexes.clear();
-        LoadScripts();
-    }
-
-    std::filesystem::path GetScriptOverridePath(uint32_t hash)
+    std::filesystem::path ScriptLoader::GetScriptOverridePathImpl(uint32_t hash)
     {
         auto scriptOverridesFolder = std::filesystem::absolute(g_Variables.ScriptOverridesFolder);
 

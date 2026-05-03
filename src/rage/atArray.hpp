@@ -55,10 +55,10 @@ namespace rage
             return false;
         }
 
-    public:
-        T* m_Data;
-        std::uint16_t m_Size;
-        std::uint16_t m_Capacity;
+        T* m_Data;                // 00000000
+        std::uint16_t m_Size;     // 00000008
+        std::uint16_t m_Capacity; // 0000000A
+        char m_Pad1[0x04];        // 0000000C
     };
-    static_assert(sizeof(atArray<std::uint32_t>) == 0x10);
+    static_assert(sizeof(atArray<std::uint32_t>) == 0x00000010);
 }

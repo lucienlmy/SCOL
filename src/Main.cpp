@@ -1,11 +1,40 @@
 #include "Hooking.hpp"
-#include "Loader.hpp"
 #include "Natives.hpp"
 #include "Pointers.hpp"
-#include "rage/scrThread.hpp"
+#include "ScriptFiber.hpp"
+#include "ScriptLoader.hpp"
 
 namespace SCOL
 {
+    static void ScriptMain()
+    {
+        while (true)
+        {
+            // Initial load
+            if (rage::scrThread::GetByHash("Startup"_J))
+            {
+                if (!g_StartupAvailable)
+                {
+                    ScriptLoader::LoadScripts();
+                    g_StartupAvailable = true;
+                }
+            }
+            else
+            {
+                g_StartupAvailable = false; // Reset when startup finishes so the next time it is available (e.g. re-entering the game after returning to the main menu), we can reload the scripts automatically.
+            }
+
+            if (g_LoadRequested)
+            {
+                if (*g_Pointers.LoadingScreenState == 0)
+                    ScriptLoader::LoadScripts();
+                g_LoadRequested = false;
+            }
+
+            ScriptFiber::Yield();
+        }
+    }
+
     static DWORD Main(PVOID)
     {
         Logging::Init("SCOL.log");
@@ -28,11 +57,13 @@ namespace SCOL
         }
         LOGF(INFO, "Hooking initialized.");
 
-        while (!rage::scrThread::GetThread("Startup"_J))
+        while (!g_Pointers.NativeRegistrationTable->m_Initialized)
             std::this_thread::sleep_for(100ms);
-
         Natives::RegisterNatives();
-        Loader::LoadScripts();
+        LOGF(INFO, "Natives registered.");
+
+        ScriptFiber::Add("ScriptMain", ScriptMain);
+        LOGF(INFO, "Script fibers registered.");
 
         while (true)
         {

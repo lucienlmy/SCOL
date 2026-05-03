@@ -1,5 +1,5 @@
 #pragma once
-#include "atRangeArray.hpp"
+#include "atMap.hpp"
 #include "pgBase.hpp"
 #include "scrValue.hpp"
 
@@ -8,25 +8,26 @@ namespace rage
     class scrProgram : public pgBase
     {
     public:
-        std::uint8_t** m_CodePages;
-        std::uint32_t m_GlobalVersion;
-        std::uint32_t m_CodeSize;
-        std::uint32_t m_ArgCount;
-        std::uint32_t m_StaticCount;
-        std::uint32_t m_GlobalCountAndBlock;
-        std::uint32_t m_NativeCount;
-        scrValue* m_Statics;
-        scrValue** m_GlobalPages;
-        std::uint64_t* m_Natives;
-        std::uint32_t m_ProcCount;
-        char m_Pad1[0x04];
-        const char** m_ProcNames;
-        std::uint32_t m_NameHash;
-        std::uint32_t m_RefCount;
-        const char* m_Name;
-        const char** m_StringPages;
-        std::uint32_t m_StringsSize;
-        bool m_Breakpoints[12];
+        std::uint8_t** m_CodePages;                // 00000010
+        std::uint32_t m_GlobalVersion;             // 00000018
+        std::uint32_t m_CodeSize;                  // 0000001C
+        std::uint32_t m_ArgCount;                  // 00000020
+        std::uint32_t m_StaticCount;               // 00000024
+        std::uint32_t m_GlobalCountAndBlock;       // 00000028
+        std::uint32_t m_NativeCount;               // 0000002C
+        scrValue* m_Statics;                       // 00000030
+        scrValue** m_GlobalPages;                  // 00000038
+        std::uint64_t* m_Natives;                  // 00000040
+        std::uint32_t m_ProcCount;                 // 00000048
+        char m_Pad1[0x04];                         // 0000004C
+        const char** m_ProcNames;                  // 00000050
+        std::uint32_t m_NameHash;                  // 00000058
+        std::uint32_t m_RefCount;                  // 0000005C
+        const char* m_Name;                        // 00000060
+        const char** m_StringPages;                // 00000068
+        std::uint32_t m_StringsSize;               // 00000070
+        char m_Pad2[0x04];                         // 00000074
+        atMap<std::uint32_t, bool>* m_Breakpoints; // 00000078
 
         std::uint32_t GetNumCodePages() const
         {
@@ -87,7 +88,7 @@ namespace rage
         scrValue* GetGlobal(std::uint32_t index) const
         {
             if (index < GetGlobalCount())
-                return &m_GlobalPages[index >> 0x12 & 0x3F][index & 0x3FFFF];
+                return &m_GlobalPages[index >> 14][index & 0x3FFF];
 
             return nullptr;
         }
@@ -119,32 +120,32 @@ namespace rage
             return nullptr;
         }
 
-        static scrProgram* GetProgram(std::uint32_t hash);
-        static void InsertProgram(scrProgram* program);
+        static scrProgram* GetByHash(std::uint32_t hash);
+        static void Add(scrProgram* program);
     };
-    static_assert(sizeof(scrProgram) == 0x80);
+    static_assert(sizeof(scrProgram) == 0x00000080);
 
-    class scrProgramRegistry
+    struct scrProgramRegistry
     {
-    public:
-        std::uint8_t m_NextFreeSlot;
-        atRangeArray<std::uint8_t, 32> m_BucketHeads;
-        atRangeArray<std::uint8_t, 176> m_NextInChain;
-        atRangeArray<scrProgram*, 176> m_Programs;
+        std::uint8_t m_NextFreeSlot;     // 00000000
+        std::uint8_t m_BucketHeads[32];  // 00000001
+        std::uint8_t m_NextInChain[176]; // 00000021
+        char m_Pad1[0x07];               // 000000D1
+        scrProgram* m_Programs[176];     // 000000D8
 
         scrProgram* Find(std::uint32_t hash)
         {
-            auto index = m_BucketHeads.m_Data[hash & 0x1F];
+            auto index = m_BucketHeads[hash & 0x1F];
 
             while (index)
             {
-                if (m_Programs.m_Data[index]->m_NameHash == hash)
-                    return m_Programs.m_Data[index];
+                if (m_Programs[index]->m_NameHash == hash)
+                    return m_Programs[index];
 
-                if (!m_NextInChain.m_Data[index])
+                if (!m_NextInChain[index])
                     break;
 
-                index = m_NextInChain.m_Data[index];
+                index = m_NextInChain[index];
             }
 
             return nullptr;
@@ -153,13 +154,13 @@ namespace rage
         void Insert(scrProgram* program)
         {
             auto bucket = program->m_NameHash & 0x1F;
-            auto next = m_NextInChain.m_Data[m_NextFreeSlot];
+            auto next = m_NextInChain[m_NextFreeSlot];
 
-            m_NextInChain.m_Data[m_NextFreeSlot] = m_BucketHeads.m_Data[bucket];
-            m_BucketHeads.m_Data[bucket] = m_NextFreeSlot;
-            m_Programs.m_Data[m_NextFreeSlot] = program;
+            m_NextInChain[m_NextFreeSlot] = m_BucketHeads[bucket];
+            m_BucketHeads[bucket] = m_NextFreeSlot;
+            m_Programs[m_NextFreeSlot] = program;
             m_NextFreeSlot = next;
         }
     };
-    static_assert(sizeof(scrProgramRegistry) == 0x658);
+    static_assert(sizeof(scrProgramRegistry) == 0x00000658);
 }

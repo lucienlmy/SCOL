@@ -2,8 +2,6 @@
 #include "Pointers.hpp"
 #include "Scanner.hpp"
 #include "ScriptFunction.hpp"
-#include "rage/scrThread.hpp"
-#include "rage/tlsContext.hpp"
 #include <nlohmann/json.hpp>
 
 namespace SCOL::Natives
@@ -14,84 +12,85 @@ namespace SCOL::Natives
     // clang-format off
 
     // Core
-    static constexpr rage::scrNativeHash LOG_TO_FILE                                       = 0x7F41C15A89FDEE9F;
-    static constexpr rage::scrNativeHash REGISTER_INDIVIDUAL_FILE                          = 0x383C067F9AA5DBC9;
-    static constexpr rage::scrNativeHash INVALIDATE_INDIVIDUAL_FILE                        = 0xDCAC1A79714643D7;
+    static constexpr std::uint64_t LOG_TO_FILE                                       = 0x7F41C15A89FDEE9F;
+    static constexpr std::uint64_t CLEAR_LOG_FILE                                    = 0x8E45F12A1A2B3C4D;
+    static constexpr std::uint64_t REGISTER_INDIVIDUAL_FILE                          = 0x383C067F9AA5DBC9;
+    static constexpr std::uint64_t INVALIDATE_INDIVIDUAL_FILE                        = 0xDCAC1A79714643D7;
 
     // JSON
-    static constexpr rage::scrNativeHash JSON_SET_INT                                      = 0x669CB77130D296AD;
-    static constexpr rage::scrNativeHash JSON_SET_BOOL                                     = 0xF800174D11572F70;
-    static constexpr rage::scrNativeHash JSON_SET_FLOAT                                    = 0x851E3C7AB9BB63E5;
-    static constexpr rage::scrNativeHash JSON_SET_STRING                                   = 0xDA71BF7EDA3632C8;
-    static constexpr rage::scrNativeHash JSON_GET_INT                                      = 0xCA18D380BB30B3EE;
-    static constexpr rage::scrNativeHash JSON_GET_BOOL                                     = 0xB343A4FE9DC54F35;
-    static constexpr rage::scrNativeHash JSON_GET_FLOAT                                    = 0xEC9BEF67DB133874;
-    static constexpr rage::scrNativeHash JSON_GET_STRING                                   = 0x77A722DEBCB308CB;
+    static constexpr std::uint64_t JSON_SET_INT                                      = 0x669CB77130D296AD;
+    static constexpr std::uint64_t JSON_SET_BOOL                                     = 0xF800174D11572F70;
+    static constexpr std::uint64_t JSON_SET_FLOAT                                    = 0x851E3C7AB9BB63E5;
+    static constexpr std::uint64_t JSON_SET_STRING                                   = 0xDA71BF7EDA3632C8;
+    static constexpr std::uint64_t JSON_GET_INT                                      = 0xCA18D380BB30B3EE;
+    static constexpr std::uint64_t JSON_GET_BOOL                                     = 0xB343A4FE9DC54F35;
+    static constexpr std::uint64_t JSON_GET_FLOAT                                    = 0xEC9BEF67DB133874;
+    static constexpr std::uint64_t JSON_GET_STRING                                   = 0x77A722DEBCB308CB;
 
     // Memory
-    static constexpr rage::scrNativeHash MEMORY_SCAN_PATTERN                               = 0x0E7D68BA1B32BA2A;
-    static constexpr rage::scrNativeHash MEMORY_ADD                                        = 0x043339EE866586BD;
-    static constexpr rage::scrNativeHash MEMORY_RIP                                        = 0x6E496FA081015FC3;
-    static constexpr rage::scrNativeHash MEMORY_DEREF                                      = 0x9C980189DFBDADAD;
-    static constexpr rage::scrNativeHash MEMORY_WRITE                                      = 0xD763E0EF3AFCE986;
-    static constexpr rage::scrNativeHash MEMORY_READ                                       = 0x5353EB6CABD2A870;
-    static constexpr rage::scrNativeHash MEMORY_WRITE_INT                                  = 0xA1CDE11FA6D2838F;
-    static constexpr rage::scrNativeHash MEMORY_READ_INT                                   = 0x1884B5B84D20DEF9;
-    static constexpr rage::scrNativeHash MEMORY_WRITE_FLOAT                                = 0xFFD64B1EC611C6DB;
-    static constexpr rage::scrNativeHash MEMORY_READ_FLOAT                                 = 0xF2A6DA07E3EE4850;
-    static constexpr rage::scrNativeHash MEMORY_WRITE_STRING                               = 0x907338E62DD47ACD;
-    static constexpr rage::scrNativeHash MEMORY_READ_STRING                                = 0x959095C3F1E3E44A;
-    static constexpr rage::scrNativeHash MEMORY_WRITE_VECTOR                               = 0x077B1F0EEB16F19A;
-    static constexpr rage::scrNativeHash MEMORY_READ_VECTOR                                = 0x0DD6010289D2A79C;
+    static constexpr std::uint64_t MEMORY_SCAN_PATTERN                               = 0x0E7D68BA1B32BA2A;
+    static constexpr std::uint64_t MEMORY_ADD                                        = 0x043339EE866586BD;
+    static constexpr std::uint64_t MEMORY_RIP                                        = 0x6E496FA081015FC3;
+    static constexpr std::uint64_t MEMORY_DEREF                                      = 0x9C980189DFBDADAD;
+    static constexpr std::uint64_t MEMORY_WRITE                                      = 0xD763E0EF3AFCE986;
+    static constexpr std::uint64_t MEMORY_READ                                       = 0x5353EB6CABD2A870;
+    static constexpr std::uint64_t MEMORY_WRITE_INT                                  = 0xA1CDE11FA6D2838F;
+    static constexpr std::uint64_t MEMORY_READ_INT                                   = 0x1884B5B84D20DEF9;
+    static constexpr std::uint64_t MEMORY_WRITE_FLOAT                                = 0xFFD64B1EC611C6DB;
+    static constexpr std::uint64_t MEMORY_READ_FLOAT                                 = 0xF2A6DA07E3EE4850;
+    static constexpr std::uint64_t MEMORY_WRITE_STRING                               = 0x907338E62DD47ACD;
+    static constexpr std::uint64_t MEMORY_READ_STRING                                = 0x959095C3F1E3E44A;
+    static constexpr std::uint64_t MEMORY_WRITE_VECTOR                               = 0x077B1F0EEB16F19A;
+    static constexpr std::uint64_t MEMORY_READ_VECTOR                                = 0x0DD6010289D2A79C;
 
     // Script Threads
-    static constexpr rage::scrNativeHash SET_CURRENT_SCRIPT_THREAD                         = 0x7AFACDB81809E2C1;
-    static constexpr rage::scrNativeHash SET_SCRIPT_THREAD_STATE                           = 0x2B53D1F2FAD6DB0E;
+    static constexpr std::uint64_t SET_CURRENT_SCRIPT_THREAD                         = 0x7AFACDB81809E2C1;
+    static constexpr std::uint64_t SET_SCRIPT_THREAD_STATE                           = 0x2B53D1F2FAD6DB0E;
 
     // Statics
-    static constexpr rage::scrNativeHash SCRIPT_STATIC_SET_INT                             = 0x857A2700DC9407CF;
-    static constexpr rage::scrNativeHash SCRIPT_STATIC_SET_FLOAT                           = 0xD8AABF55B8C2ABCC;
-    static constexpr rage::scrNativeHash SCRIPT_STATIC_SET_STRING                          = 0xBBED7EBD9CB32457;
-    static constexpr rage::scrNativeHash SCRIPT_STATIC_SET_TEXT_LABEL                      = 0x82486D97F828522B;
-    static constexpr rage::scrNativeHash SCRIPT_STATIC_SET_VECTOR                          = 0x1CBDE8A15884D019;
-    static constexpr rage::scrNativeHash SCRIPT_STATIC_GET_INT                             = 0xE60444296FBC9C3C;
-    static constexpr rage::scrNativeHash SCRIPT_STATIC_GET_FLOAT                           = 0x02917A468A9F9203;
-    static constexpr rage::scrNativeHash SCRIPT_STATIC_GET_STRING                          = 0x50AECCD9E4A23B3A;
-    static constexpr rage::scrNativeHash SCRIPT_STATIC_GET_TEXT_LABEL                      = 0x83C64F9F51CCB284;
-    static constexpr rage::scrNativeHash SCRIPT_STATIC_GET_VECTOR                          = 0x022347480BDA5340;
-    static constexpr rage::scrNativeHash SCRIPT_STATIC_GET_POINTER                         = 0x8B1A5E688A9ABF31;
+    static constexpr std::uint64_t SCRIPT_STATIC_SET_INT                             = 0x857A2700DC9407CF;
+    static constexpr std::uint64_t SCRIPT_STATIC_SET_FLOAT                           = 0xD8AABF55B8C2ABCC;
+    static constexpr std::uint64_t SCRIPT_STATIC_SET_STRING                          = 0xBBED7EBD9CB32457;
+    static constexpr std::uint64_t SCRIPT_STATIC_SET_TEXT_LABEL                      = 0x82486D97F828522B;
+    static constexpr std::uint64_t SCRIPT_STATIC_SET_VECTOR                          = 0x1CBDE8A15884D019;
+    static constexpr std::uint64_t SCRIPT_STATIC_GET_INT                             = 0xE60444296FBC9C3C;
+    static constexpr std::uint64_t SCRIPT_STATIC_GET_FLOAT                           = 0x02917A468A9F9203;
+    static constexpr std::uint64_t SCRIPT_STATIC_GET_STRING                          = 0x50AECCD9E4A23B3A;
+    static constexpr std::uint64_t SCRIPT_STATIC_GET_TEXT_LABEL                      = 0x83C64F9F51CCB284;
+    static constexpr std::uint64_t SCRIPT_STATIC_GET_VECTOR                          = 0x022347480BDA5340;
+    static constexpr std::uint64_t SCRIPT_STATIC_GET_POINTER                         = 0x8B1A5E688A9ABF31;
 
     // Globals
-    static constexpr rage::scrNativeHash SCRIPT_GLOBAL_SET_INT                             = 0xE308F800129466D7;
-    static constexpr rage::scrNativeHash SCRIPT_GLOBAL_SET_FLOAT                           = 0xCE23B2BC1A4037EE;
-    static constexpr rage::scrNativeHash SCRIPT_GLOBAL_SET_TEXT_LABEL                      = 0xC7540C6E3F588A63;
-    static constexpr rage::scrNativeHash SCRIPT_GLOBAL_SET_VECTOR                          = 0x2D670A4779E7390E;
-    static constexpr rage::scrNativeHash SCRIPT_GLOBAL_GET_INT                             = 0x95257993CA3F052E;
-    static constexpr rage::scrNativeHash SCRIPT_GLOBAL_GET_FLOAT                           = 0xDC21946AD79CBEAF;
-    static constexpr rage::scrNativeHash SCRIPT_GLOBAL_GET_TEXT_LABEL                      = 0x79516115C6DB77F2;
-    static constexpr rage::scrNativeHash SCRIPT_GLOBAL_GET_VECTOR                          = 0x673E810DC3EC1307;
-    static constexpr rage::scrNativeHash SCRIPT_GLOBAL_GET_POINTER                         = 0xDFFE51F613A8E53F;
+    static constexpr std::uint64_t SCRIPT_GLOBAL_SET_INT                             = 0xE308F800129466D7;
+    static constexpr std::uint64_t SCRIPT_GLOBAL_SET_FLOAT                           = 0xCE23B2BC1A4037EE;
+    static constexpr std::uint64_t SCRIPT_GLOBAL_SET_TEXT_LABEL                      = 0xC7540C6E3F588A63;
+    static constexpr std::uint64_t SCRIPT_GLOBAL_SET_VECTOR                          = 0x2D670A4779E7390E;
+    static constexpr std::uint64_t SCRIPT_GLOBAL_GET_INT                             = 0x95257993CA3F052E;
+    static constexpr std::uint64_t SCRIPT_GLOBAL_GET_FLOAT                           = 0xDC21946AD79CBEAF;
+    static constexpr std::uint64_t SCRIPT_GLOBAL_GET_TEXT_LABEL                      = 0x79516115C6DB77F2;
+    static constexpr std::uint64_t SCRIPT_GLOBAL_GET_VECTOR                          = 0x673E810DC3EC1307;
+    static constexpr std::uint64_t SCRIPT_GLOBAL_GET_POINTER                         = 0xDFFE51F613A8E53F;
 
     // Script Functions (array parameters and text label/struct returns are currently not supported)
-    static constexpr rage::scrNativeHash SCRIPT_FUNCTION_BEGIN_CALL                        = 0xC0E22B4A435AC866;
-    static constexpr rage::scrNativeHash SCRIPT_FUNCTION_ADD_PARAM_INT                     = 0x08498C0E9D0B40FF;
-    static constexpr rage::scrNativeHash SCRIPT_FUNCTION_ADD_PARAM_FLOAT                   = 0x77447CC2B714B3CD;
-    static constexpr rage::scrNativeHash SCRIPT_FUNCTION_ADD_PARAM_STRING                  = 0x274DF0AFD6AE55ED;
-    static constexpr rage::scrNativeHash SCRIPT_FUNCTION_ADD_PARAM_VECTOR                  = 0x4C033060974B7B16;
-    static constexpr rage::scrNativeHash SCRIPT_FUNCTION_ADD_PARAM_POINTER                 = 0x6D56C40AE63AF5EB;
-    static constexpr rage::scrNativeHash SCRIPT_FUNCTION_ADD_PARAM_REFERENCE_INT           = 0x23C957EA2CAC32C1;
-    static constexpr rage::scrNativeHash SCRIPT_FUNCTION_ADD_PARAM_REFERENCE_FLOAT         = 0xD1F101417313D51C;
-    static constexpr rage::scrNativeHash SCRIPT_FUNCTION_ADD_PARAM_REFERENCE_TEXT_LABEL_15 = 0x5C322B4B4444B1D5;
-    static constexpr rage::scrNativeHash SCRIPT_FUNCTION_ADD_PARAM_REFERENCE_TEXT_LABEL_23 = 0xE4FED9824D4F4506;
-    static constexpr rage::scrNativeHash SCRIPT_FUNCTION_ADD_PARAM_REFERENCE_TEXT_LABEL_31 = 0x3A991D3A46ED3946;
-    static constexpr rage::scrNativeHash SCRIPT_FUNCTION_ADD_PARAM_REFERENCE_TEXT_LABEL_63 = 0xB8051D0558A34D66;
-    static constexpr rage::scrNativeHash SCRIPT_FUNCTION_ADD_PARAM_REFERENCE_VECTOR        = 0x51A946C23ABD71E8;
-    static constexpr rage::scrNativeHash SCRIPT_FUNCTION_ADD_PARAM_REFERENCE_STRUCT        = 0xBB8A36B6AF274653;
-    static constexpr rage::scrNativeHash SCRIPT_FUNCTION_END_CALL_PROC                     = 0x56A2FF1109E4288A;
-    static constexpr rage::scrNativeHash SCRIPT_FUNCTION_END_CALL_INT                      = 0x21448D2E73E6268B;
-    static constexpr rage::scrNativeHash SCRIPT_FUNCTION_END_CALL_FLOAT                    = 0xD67665C45FB0350D;
-    static constexpr rage::scrNativeHash SCRIPT_FUNCTION_END_CALL_STRING                   = 0xCF772F62E284AC66;
-    static constexpr rage::scrNativeHash SCRIPT_FUNCTION_END_CALL_VECTOR                   = 0xBDAC87D43E99E594;
+    static constexpr std::uint64_t SCRIPT_FUNCTION_BEGIN_CALL                        = 0xC0E22B4A435AC866;
+    static constexpr std::uint64_t SCRIPT_FUNCTION_ADD_PARAM_INT                     = 0x08498C0E9D0B40FF;
+    static constexpr std::uint64_t SCRIPT_FUNCTION_ADD_PARAM_FLOAT                   = 0x77447CC2B714B3CD;
+    static constexpr std::uint64_t SCRIPT_FUNCTION_ADD_PARAM_STRING                  = 0x274DF0AFD6AE55ED;
+    static constexpr std::uint64_t SCRIPT_FUNCTION_ADD_PARAM_VECTOR                  = 0x4C033060974B7B16;
+    static constexpr std::uint64_t SCRIPT_FUNCTION_ADD_PARAM_POINTER                 = 0x6D56C40AE63AF5EB;
+    static constexpr std::uint64_t SCRIPT_FUNCTION_ADD_PARAM_REFERENCE_INT           = 0x23C957EA2CAC32C1;
+    static constexpr std::uint64_t SCRIPT_FUNCTION_ADD_PARAM_REFERENCE_FLOAT         = 0xD1F101417313D51C;
+    static constexpr std::uint64_t SCRIPT_FUNCTION_ADD_PARAM_REFERENCE_TEXT_LABEL_15 = 0x5C322B4B4444B1D5;
+    static constexpr std::uint64_t SCRIPT_FUNCTION_ADD_PARAM_REFERENCE_TEXT_LABEL_23 = 0xE4FED9824D4F4506;
+    static constexpr std::uint64_t SCRIPT_FUNCTION_ADD_PARAM_REFERENCE_TEXT_LABEL_31 = 0x3A991D3A46ED3946;
+    static constexpr std::uint64_t SCRIPT_FUNCTION_ADD_PARAM_REFERENCE_TEXT_LABEL_63 = 0xB8051D0558A34D66;
+    static constexpr std::uint64_t SCRIPT_FUNCTION_ADD_PARAM_REFERENCE_VECTOR        = 0x51A946C23ABD71E8;
+    static constexpr std::uint64_t SCRIPT_FUNCTION_ADD_PARAM_REFERENCE_STRUCT        = 0xBB8A36B6AF274653;
+    static constexpr std::uint64_t SCRIPT_FUNCTION_END_CALL_PROC                     = 0x56A2FF1109E4288A;
+    static constexpr std::uint64_t SCRIPT_FUNCTION_END_CALL_INT                      = 0x21448D2E73E6268B;
+    static constexpr std::uint64_t SCRIPT_FUNCTION_END_CALL_FLOAT                    = 0xD67665C45FB0350D;
+    static constexpr std::uint64_t SCRIPT_FUNCTION_END_CALL_STRING                   = 0xCF772F62E284AC66;
+    static constexpr std::uint64_t SCRIPT_FUNCTION_END_CALL_VECTOR                   = 0xBDAC87D43E99E594;
 
     // clang-format on
 
@@ -125,7 +124,7 @@ namespace SCOL::Natives
         Ret EndCall()
         {
             Ret retVal{};
-            SCOL::ScriptFunction::CallImpl(m_Hash, m_Pc, m_Params, &retVal, sizeof(retVal));
+            SCOL::ScriptFunction::CallInternal(m_Hash, m_Pc, m_Params.data(), static_cast<std::uint32_t>(m_Params.size()), &retVal, sizeof(retVal));
             m_Params.clear();
             m_Index = 0;
             return retVal;
@@ -167,8 +166,9 @@ namespace SCOL::Natives
 
         static ScriptJSON& GetOrCreate()
         {
-            auto hash = rage::tlsContext::Get()->m_CurrentScriptThread->m_ScriptHash;
-            auto name = rage::tlsContext::Get()->m_CurrentScriptThread->m_ScriptName;
+            auto thread = *rage::scrThread::TLS::Get()->m_CurrentThread;
+            auto hash = thread->m_ScriptHash;
+            auto name = thread->m_ScriptName;
 
             auto it = m_ScriptJSONs.find(hash);
             if (it != m_ScriptJSONs.end())
@@ -221,16 +221,16 @@ namespace SCOL::Natives
         static inline std::unordered_map<joaat_t, ScriptJSON> m_ScriptJSONs;
     };
 
-    static ScriptFunctionCallContext scrFunctionCallContext;
-    static std::unordered_map<joaat_t, std::ofstream> scriptLogs;
+    static ScriptFunctionCallContext g_scrFunctionCallContext;
+    static std::unordered_map<joaat_t, std::ofstream> g_ScriptLogs;
 
     static void CleanupScriptLog(joaat_t scriptHash)
     {
-        auto it = scriptLogs.find(scriptHash);
-        if (it != scriptLogs.end())
+        auto it = g_ScriptLogs.find(scriptHash);
+        if (it != g_ScriptLogs.end())
         {
             it->second.close();
-            scriptLogs.erase(it);
+            g_ScriptLogs.erase(it);
         }
     }
 
@@ -241,16 +241,17 @@ namespace SCOL::Natives
         LOGF(INFO, "Cleaned up resources for script with hash 0x{:X}.", scriptHash);
     }
 
-    static void NativeCommandLogToFile(rage::scrNativeCallContext* ctx)
+    static void NativeCommandLogToFile(rage::scrThread::NativeContext* ctx)
     {
-        auto hash = rage::tlsContext::Get()->m_CurrentScriptThread->m_ScriptHash;
-        auto name = rage::tlsContext::Get()->m_CurrentScriptThread->m_ScriptName;
+        auto thread = *rage::scrThread::TLS::Get()->m_CurrentThread;
+        auto hash = thread->m_ScriptHash;
+        auto name = thread->m_ScriptName;
 
-        auto it = scriptLogs.find(hash);
-        if (it == scriptLogs.end())
+        auto it = g_ScriptLogs.find(hash);
+        if (it == g_ScriptLogs.end())
         {
             auto path = std::filesystem::path(g_Variables.ScriptsFolder) / (std::string(name) + ".log");
-            it = scriptLogs.emplace(hash, std::ofstream{path, std::ios::out | std::ios::trunc}).first;
+            it = g_ScriptLogs.emplace(hash, std::ofstream{path, std::ios::out | std::ios::trunc}).first;
         }
 
         auto& logFile = it->second;
@@ -286,24 +287,39 @@ namespace SCOL::Natives
         logFile.flush();
     }
 
-    static void NativeCommandRegisterIndividualFile(rage::scrNativeCallContext* ctx)
+    static void NativeCommandClearLogFile(rage::scrThread::NativeContext* ctx)
+    {
+        auto thread = *rage::scrThread::TLS::Get()->m_CurrentThread;
+        auto hash = thread->m_ScriptHash;
+        auto name = thread->m_ScriptName;
+
+        auto it = g_ScriptLogs.find(hash);
+        if (it != g_ScriptLogs.end())
+        {
+            it->second.close();
+            auto path = std::filesystem::path(g_Variables.ScriptsFolder) / (std::string(name) + ".log");
+            it->second.open(path, std::ios::out | std::ios::trunc);
+        }
+    }
+
+    static void NativeCommandRegisterIndividualFile(rage::scrThread::NativeContext* ctx)
     {
         auto file = ctx->m_Args[0].String;
         auto relativePath = ctx->m_Args[1].String;
 
         std::uint32_t index = 0xFFFFFFFF;
         g_Pointers.RegisterIndividualFile(&index, file, true, relativePath, false, false);
-        ctx->m_ReturnValue->Int = index != 0xFFFFFFFF;
+        ctx->m_Rets->Int = index != 0xFFFFFFFF;
     }
 
-    static void NativeCommandInvalidateIndividualFile(rage::scrNativeCallContext* ctx)
+    static void NativeCommandInvalidateIndividualFile(rage::scrThread::NativeContext* ctx)
     {
         auto file = ctx->m_Args[0].String;
 
         g_Pointers.InvalidateIndividualFile(file);
     }
 
-    static void NativeCommandJSONSetInt(rage::scrNativeCallContext* ctx)
+    static void NativeCommandJSONSetInt(rage::scrThread::NativeContext* ctx)
     {
         auto section = ctx->m_Args[0].String;
         auto key = ctx->m_Args[1].String;
@@ -313,7 +329,7 @@ namespace SCOL::Natives
         json.Set(section, key, value);
     }
 
-    static void NativeCommandJSONSetBool(rage::scrNativeCallContext* ctx)
+    static void NativeCommandJSONSetBool(rage::scrThread::NativeContext* ctx)
     {
         auto section = ctx->m_Args[0].String;
         auto key = ctx->m_Args[1].String;
@@ -323,7 +339,7 @@ namespace SCOL::Natives
         json.Set(section, key, static_cast<bool>(value));
     }
 
-    static void NativeCommandJSONSetFloat(rage::scrNativeCallContext* ctx)
+    static void NativeCommandJSONSetFloat(rage::scrThread::NativeContext* ctx)
     {
         auto section = ctx->m_Args[0].String;
         auto key = ctx->m_Args[1].String;
@@ -333,7 +349,7 @@ namespace SCOL::Natives
         json.Set(section, key, value);
     }
 
-    static void NativeCommandJSONSetString(rage::scrNativeCallContext* ctx)
+    static void NativeCommandJSONSetString(rage::scrThread::NativeContext* ctx)
     {
         auto section = ctx->m_Args[0].String;
         auto key = ctx->m_Args[1].String;
@@ -343,37 +359,37 @@ namespace SCOL::Natives
         json.Set(section, key, value);
     }
 
-    static void NativeCommandJSONGetInt(rage::scrNativeCallContext* ctx)
+    static void NativeCommandJSONGetInt(rage::scrThread::NativeContext* ctx)
     {
         auto section = ctx->m_Args[0].String;
         auto key = ctx->m_Args[1].String;
         auto _default = ctx->m_Args[2].Int;
 
         auto& json = ScriptJSON::GetOrCreate();
-        ctx->m_ReturnValue->Int = json.Get(section, key, _default);
+        ctx->m_Rets->Int = json.Get(section, key, _default);
     }
 
-    static void NativeCommandJSONGetBool(rage::scrNativeCallContext* ctx)
+    static void NativeCommandJSONGetBool(rage::scrThread::NativeContext* ctx)
     {
         auto section = ctx->m_Args[0].String;
         auto key = ctx->m_Args[1].String;
         auto _default = ctx->m_Args[2].Int;
 
         auto& json = ScriptJSON::GetOrCreate();
-        ctx->m_ReturnValue->Int = json.Get(section, key, static_cast<bool>(_default));
+        ctx->m_Rets->Int = json.Get(section, key, static_cast<bool>(_default));
     }
 
-    static void NativeCommandJSONGetFloat(rage::scrNativeCallContext* ctx)
+    static void NativeCommandJSONGetFloat(rage::scrThread::NativeContext* ctx)
     {
         auto section = ctx->m_Args[0].String;
         auto key = ctx->m_Args[1].String;
         auto _default = ctx->m_Args[2].Float;
 
         auto& json = ScriptJSON::GetOrCreate();
-        ctx->m_ReturnValue->Float = json.Get(section, key, _default);
+        ctx->m_Rets->Float = json.Get(section, key, _default);
     }
 
-    static void NativeCommandJSONGetString(rage::scrNativeCallContext* ctx)
+    static void NativeCommandJSONGetString(rage::scrThread::NativeContext* ctx)
     {
         auto section = ctx->m_Args[0].String;
         auto key = ctx->m_Args[1].String;
@@ -394,7 +410,7 @@ namespace SCOL::Natives
         dest[size] = '\0';
     }
 
-    static void NativeCommandMemoryScanPattern(rage::scrNativeCallContext* ctx)
+    static void NativeCommandMemoryScanPattern(rage::scrThread::NativeContext* ctx)
     {
         auto name = ctx->m_Args[0].String;
         auto pattern = ctx->m_Args[1].String;
@@ -403,50 +419,50 @@ namespace SCOL::Natives
         if (auto addr = Scanner::ScanPattern(name, pattern))
             ptr = addr->As<std::uint64_t>();
 
-        ctx->m_ReturnValue->Any = ptr;
+        ctx->m_Rets->Any = ptr;
     }
 
-    static void NativeCommandMemoryAdd(rage::scrNativeCallContext* ctx)
+    static void NativeCommandMemoryAdd(rage::scrThread::NativeContext* ctx)
     {
         auto ptr = ctx->m_Args[0].Any;
         auto offset = ctx->m_Args[1].Int;
 
         if (!ptr)
         {
-            ctx->m_ReturnValue->Any = 0;
+            ctx->m_Rets->Any = 0;
             return;
         }
 
-        ctx->m_ReturnValue->Any = Memory(ptr).Add(offset).As<std::uint64_t>();
+        ctx->m_Rets->Any = Memory(ptr).Add(offset).As<std::uint64_t>();
     }
 
-    static void NativeCommandMemoryRip(rage::scrNativeCallContext* ctx)
+    static void NativeCommandMemoryRip(rage::scrThread::NativeContext* ctx)
     {
         auto ptr = ctx->m_Args[0].Any;
 
         if (!ptr)
         {
-            ctx->m_ReturnValue->Any = 0;
+            ctx->m_Rets->Any = 0;
             return;
         }
 
-        ctx->m_ReturnValue->Any = Memory(ptr).Rip().As<std::uint64_t>();
+        ctx->m_Rets->Any = Memory(ptr).Rip().As<std::uint64_t>();
     }
 
-    static void NativeCommandMemoryDeref(rage::scrNativeCallContext* ctx)
+    static void NativeCommandMemoryDeref(rage::scrThread::NativeContext* ctx)
     {
         auto ptr = ctx->m_Args[0].Any;
 
         if (!ptr)
         {
-            ctx->m_ReturnValue->Any = 0;
+            ctx->m_Rets->Any = 0;
             return;
         }
 
-        ctx->m_ReturnValue->Any = static_cast<std::uint64_t>(*Memory(ptr).As<std::uint64_t*>());
+        ctx->m_Rets->Any = static_cast<std::uint64_t>(*Memory(ptr).As<std::uint64_t*>());
     }
 
-    static void NativeCommandMemoryWrite(rage::scrNativeCallContext* ctx)
+    static void NativeCommandMemoryWrite(rage::scrThread::NativeContext* ctx)
     {
         auto ptr = ctx->m_Args[0].Any;
         auto patch = ctx->m_Args[1].Reference;
@@ -470,7 +486,7 @@ namespace SCOL::Natives
         VirtualProtect(dst, count, oldProtect, &temp);
     }
 
-    static void NativeCommandMemoryRead(rage::scrNativeCallContext* ctx)
+    static void NativeCommandMemoryRead(rage::scrThread::NativeContext* ctx)
     {
         auto ptr = ctx->m_Args[0].Any;
         auto patch = ctx->m_Args[1].Reference;
@@ -486,7 +502,7 @@ namespace SCOL::Natives
             patch[i + 1].Any = static_cast<std::uint64_t>(src[i]);
     }
 
-    static void NativeCommandMemoryWriteInt(rage::scrNativeCallContext* ctx)
+    static void NativeCommandMemoryWriteInt(rage::scrThread::NativeContext* ctx)
     {
         auto ptr = ctx->m_Args[0].Any;
         auto value = ctx->m_Args[1].Int;
@@ -497,7 +513,7 @@ namespace SCOL::Natives
         *Memory(ptr).As<std::int32_t*>() = value;
     }
 
-    static void NativeCommandMemoryReadInt(rage::scrNativeCallContext* ctx)
+    static void NativeCommandMemoryReadInt(rage::scrThread::NativeContext* ctx)
     {
         auto ptr = ctx->m_Args[0].Any;
 
@@ -505,10 +521,10 @@ namespace SCOL::Natives
         if (ptr)
             retVal = *Memory(ptr).As<std::int32_t*>();
 
-        ctx->m_ReturnValue->Int = retVal;
+        ctx->m_Rets->Int = retVal;
     }
 
-    static void NativeCommandMemoryWriteFloat(rage::scrNativeCallContext* ctx)
+    static void NativeCommandMemoryWriteFloat(rage::scrThread::NativeContext* ctx)
     {
         auto ptr = ctx->m_Args[0].Any;
         auto value = ctx->m_Args[1].Float;
@@ -519,7 +535,7 @@ namespace SCOL::Natives
         *Memory(ptr).As<float*>() = value;
     }
 
-    static void NativeCommandMemoryReadFloat(rage::scrNativeCallContext* ctx)
+    static void NativeCommandMemoryReadFloat(rage::scrThread::NativeContext* ctx)
     {
         auto ptr = ctx->m_Args[0].Any;
 
@@ -527,10 +543,10 @@ namespace SCOL::Natives
         if (ptr)
             retVal = *Memory(ptr).As<float*>();
 
-        ctx->m_ReturnValue->Float = retVal;
+        ctx->m_Rets->Float = retVal;
     }
 
-    static void NativeCommandMemoryWriteString(rage::scrNativeCallContext* ctx)
+    static void NativeCommandMemoryWriteString(rage::scrThread::NativeContext* ctx)
     {
         auto ptr = ctx->m_Args[0].Any;
         auto value = ctx->m_Args[1].String;
@@ -542,7 +558,7 @@ namespace SCOL::Natives
         std::strncpy(Memory(ptr).As<char*>(), value, size);
     }
 
-    static void NativeCommandMemoryReadString(rage::scrNativeCallContext* ctx)
+    static void NativeCommandMemoryReadString(rage::scrThread::NativeContext* ctx)
     {
         auto ptr = ctx->m_Args[0].Any;
 
@@ -550,10 +566,10 @@ namespace SCOL::Natives
         if (ptr)
             retVal = Memory(ptr).As<const char*>();
 
-        ctx->m_ReturnValue->String = retVal;
+        ctx->m_Rets->String = retVal;
     }
 
-    static void NativeCommandMemoryWriteVector(rage::scrNativeCallContext* ctx)
+    static void NativeCommandMemoryWriteVector(rage::scrThread::NativeContext* ctx)
     {
         auto ptr = ctx->m_Args[0].Any;
         auto valueX = ctx->m_Args[2].Float;
@@ -566,7 +582,7 @@ namespace SCOL::Natives
         *Memory(ptr).As<rage::Vector3*>() = rage::Vector3(valueX, valueY, valueZ);
     }
 
-    static void NativeCommandMemoryReadVector(rage::scrNativeCallContext* ctx)
+    static void NativeCommandMemoryReadVector(rage::scrThread::NativeContext* ctx)
     {
         auto ptr = ctx->m_Args[0].Any;
 
@@ -574,72 +590,72 @@ namespace SCOL::Natives
         if (ptr)
             retVal = *Memory(ptr).As<rage::Vector3*>();
 
-        ctx->m_ReturnValue[0].Float = retVal.x;
-        ctx->m_ReturnValue[1].Float = retVal.y;
-        ctx->m_ReturnValue[2].Float = retVal.z;
+        ctx->m_Rets[0].Float = retVal.x;
+        ctx->m_Rets[1].Float = retVal.y;
+        ctx->m_Rets[2].Float = retVal.z;
     }
 
-    static void NativeCommandSetCurrentScriptThread(rage::scrNativeCallContext* ctx)
+    static void NativeCommandSetCurrentScriptThread(rage::scrThread::NativeContext* ctx)
     {
         auto hash = ctx->m_Args[0].Int;
 
-        if (auto thread = rage::scrThread::GetThread(hash))
+        if (auto thread = rage::scrThread::GetByHash(hash))
         {
-            rage::tlsContext::Get()->m_CurrentScriptThread = thread;
-            rage::tlsContext::Get()->m_ScriptThreadActive = true;
+            *rage::scrThread::TLS::Get()->m_CurrentThread = thread;
+            *rage::scrThread::TLS::Get()->m_CurrentThreadActive = true;
         }
     }
 
-    static void NativeCommandSetScriptThreadState(rage::scrNativeCallContext* ctx)
+    static void NativeCommandSetScriptThreadState(rage::scrThread::NativeContext* ctx)
     {
         auto hash = ctx->m_Args[0].Int;
-        auto state = ctx->m_Args[1].Int;
+        auto state = static_cast<rage::scrThread::State>(ctx->m_Args[1].Int);
 
-        if (state < rage::scrThreadState::RUNNING || state > rage::scrThreadState::PAUSED)
+        if (state < rage::scrThread::State::RUNNING || state > rage::scrThread::State::PAUSED)
             return;
 
-        if (auto thread = rage::scrThread::GetThread(hash))
-            thread->m_Context.m_State = static_cast<rage::scrThreadState>(state);
+        if (auto thread = rage::scrThread::GetByHash(hash))
+            thread->m_Context.m_State = state;
     }
 
-    static void NativeCommandScriptStaticSetInt(rage::scrNativeCallContext* ctx)
+    static void NativeCommandScriptStaticSetInt(rage::scrThread::NativeContext* ctx)
     {
         auto hash = ctx->m_Args[0].Int;
         auto index = ctx->m_Args[1].Int;
         auto value = ctx->m_Args[2].Int;
 
-        if (auto thread = rage::scrThread::GetThread(hash))
+        if (auto thread = rage::scrThread::GetByHash(hash))
             thread->m_Stack[index].Int = value;
     }
 
-    static void NativeCommandScriptStaticSetFloat(rage::scrNativeCallContext* ctx)
+    static void NativeCommandScriptStaticSetFloat(rage::scrThread::NativeContext* ctx)
     {
         auto hash = ctx->m_Args[0].Int;
         auto index = ctx->m_Args[1].Int;
         auto value = ctx->m_Args[2].Float;
 
-        if (auto thread = rage::scrThread::GetThread(hash))
+        if (auto thread = rage::scrThread::GetByHash(hash))
             thread->m_Stack[index].Float = value;
     }
 
-    static void NativeCommandScriptStaticSetString(rage::scrNativeCallContext* ctx)
+    static void NativeCommandScriptStaticSetString(rage::scrThread::NativeContext* ctx)
     {
         auto hash = ctx->m_Args[0].Int;
         auto index = ctx->m_Args[1].Int;
         auto value = ctx->m_Args[2].String;
 
-        if (auto thread = rage::scrThread::GetThread(hash))
+        if (auto thread = rage::scrThread::GetByHash(hash))
             thread->m_Stack[index].String = value;
     }
 
-    static void NativeCommandScriptStaticSetTextLabel(rage::scrNativeCallContext* ctx)
+    static void NativeCommandScriptStaticSetTextLabel(rage::scrThread::NativeContext* ctx)
     {
         auto hash = ctx->m_Args[0].Int;
         auto index = ctx->m_Args[1].Int;
         auto value = ctx->m_Args[2].String;
         auto size = ctx->m_Args[3].Int;
 
-        if (auto thread = rage::scrThread::GetThread(hash))
+        if (auto thread = rage::scrThread::GetByHash(hash))
         {
             if (size > 63)
                 size = 63;
@@ -650,7 +666,7 @@ namespace SCOL::Natives
         }
     }
 
-    static void NativeCommandScriptStaticSetVector(rage::scrNativeCallContext* ctx)
+    static void NativeCommandScriptStaticSetVector(rage::scrThread::NativeContext* ctx)
     {
         auto hash = ctx->m_Args[0].Int;
         auto index = ctx->m_Args[1].Int;
@@ -658,7 +674,7 @@ namespace SCOL::Natives
         auto valueY = ctx->m_Args[3].Float;
         auto valueZ = ctx->m_Args[4].Float;
 
-        if (auto thread = rage::scrThread::GetThread(hash))
+        if (auto thread = rage::scrThread::GetByHash(hash))
         {
             thread->m_Stack[index + 0].Float = valueX;
             thread->m_Stack[index + 1].Float = valueY;
@@ -666,85 +682,85 @@ namespace SCOL::Natives
         }
     }
 
-    static void NativeCommandScriptStaticGetInt(rage::scrNativeCallContext* ctx)
+    static void NativeCommandScriptStaticGetInt(rage::scrThread::NativeContext* ctx)
     {
         auto hash = ctx->m_Args[0].Int;
         auto index = ctx->m_Args[1].Int;
 
         std::int32_t retVal{};
-        if (auto thread = rage::scrThread::GetThread(hash))
+        if (auto thread = rage::scrThread::GetByHash(hash))
             retVal = thread->m_Stack[index].Int;
 
-        ctx->m_ReturnValue->Int = retVal;
+        ctx->m_Rets->Int = retVal;
     }
 
-    static void NativeCommandScriptStaticGetFloat(rage::scrNativeCallContext* ctx)
+    static void NativeCommandScriptStaticGetFloat(rage::scrThread::NativeContext* ctx)
     {
         auto hash = ctx->m_Args[0].Int;
         auto index = ctx->m_Args[1].Int;
 
         float retVal{};
-        if (auto thread = rage::scrThread::GetThread(hash))
+        if (auto thread = rage::scrThread::GetByHash(hash))
             retVal = thread->m_Stack[index].Float;
 
-        ctx->m_ReturnValue->Float = retVal;
+        ctx->m_Rets->Float = retVal;
     }
 
-    static void NativeCommandScriptStaticGetString(rage::scrNativeCallContext* ctx)
+    static void NativeCommandScriptStaticGetString(rage::scrThread::NativeContext* ctx)
     {
         auto hash = ctx->m_Args[0].Int;
         auto index = ctx->m_Args[1].Int;
 
         const char* retVal{""};
-        if (auto thread = rage::scrThread::GetThread(hash))
+        if (auto thread = rage::scrThread::GetByHash(hash))
             retVal = thread->m_Stack[index].String;
 
-        ctx->m_ReturnValue->String = retVal;
+        ctx->m_Rets->String = retVal;
     }
 
-    static void NativeCommandScriptStaticGetTextLabel(rage::scrNativeCallContext* ctx)
+    static void NativeCommandScriptStaticGetTextLabel(rage::scrThread::NativeContext* ctx)
     {
         auto hash = ctx->m_Args[0].Int;
         auto index = ctx->m_Args[1].Int;
 
         char* retVal{};
-        if (auto thread = rage::scrThread::GetThread(hash))
+        if (auto thread = rage::scrThread::GetByHash(hash))
             retVal = reinterpret_cast<char*>(&thread->m_Stack[index]);
 
-        ctx->m_ReturnValue->String = retVal ? retVal : "";
+        ctx->m_Rets->String = retVal ? retVal : "";
     }
 
-    static void NativeCommandScriptStaticGetVector(rage::scrNativeCallContext* ctx)
+    static void NativeCommandScriptStaticGetVector(rage::scrThread::NativeContext* ctx)
     {
         auto hash = ctx->m_Args[0].Int;
         auto index = ctx->m_Args[1].Int;
 
         rage::scrVector retVal{};
-        if (auto thread = rage::scrThread::GetThread(hash))
+        if (auto thread = rage::scrThread::GetByHash(hash))
         {
             retVal.x = thread->m_Stack[index + 0].Float;
             retVal.y = thread->m_Stack[index + 1].Float;
             retVal.z = thread->m_Stack[index + 2].Float;
         }
 
-        ctx->m_ReturnValue[0].Float = retVal.x;
-        ctx->m_ReturnValue[1].Float = retVal.y;
-        ctx->m_ReturnValue[2].Float = retVal.z;
+        ctx->m_Rets[0].Float = retVal.x;
+        ctx->m_Rets[1].Float = retVal.y;
+        ctx->m_Rets[2].Float = retVal.z;
     }
 
-    static void NativeCommandScriptStaticGetPointer(rage::scrNativeCallContext* ctx)
+    static void NativeCommandScriptStaticGetPointer(rage::scrThread::NativeContext* ctx)
     {
         auto hash = ctx->m_Args[0].Int;
         auto index = ctx->m_Args[1].Int;
 
         std::uint64_t retVal{};
-        if (auto thread = rage::scrThread::GetThread(hash))
+        if (auto thread = rage::scrThread::GetByHash(hash))
             retVal = reinterpret_cast<std::uint64_t>(&thread->m_Stack[index]);
 
-        ctx->m_ReturnValue->Any = retVal;
+        ctx->m_Rets->Any = retVal;
     }
 
-    static void NativeCommandScriptGlobalSetInt(rage::scrNativeCallContext* ctx)
+    static void NativeCommandScriptGlobalSetInt(rage::scrThread::NativeContext* ctx)
     {
         auto index = ctx->m_Args[0].Int;
         auto value = ctx->m_Args[1].Int;
@@ -752,7 +768,7 @@ namespace SCOL::Natives
         g_Pointers.ScriptGlobals[index >> 0x12 & 0x3F][index & 0x3FFFF].Int = value;
     }
 
-    static void NativeCommandScriptGlobalSetFloat(rage::scrNativeCallContext* ctx)
+    static void NativeCommandScriptGlobalSetFloat(rage::scrThread::NativeContext* ctx)
     {
         auto index = ctx->m_Args[0].Int;
         auto value = ctx->m_Args[1].Float;
@@ -760,7 +776,7 @@ namespace SCOL::Natives
         g_Pointers.ScriptGlobals[index >> 0x12 & 0x3F][index & 0x3FFFF].Float = value;
     }
 
-    static void NativeCommandScriptGlobalSetTextLabel(rage::scrNativeCallContext* ctx)
+    static void NativeCommandScriptGlobalSetTextLabel(rage::scrThread::NativeContext* ctx)
     {
         auto index = ctx->m_Args[0].Int;
         auto value = ctx->m_Args[1].String;
@@ -774,7 +790,7 @@ namespace SCOL::Natives
         dest[size - 1] = '\0';
     }
 
-    static void NativeCommandScriptGlobalSetVector(rage::scrNativeCallContext* ctx)
+    static void NativeCommandScriptGlobalSetVector(rage::scrThread::NativeContext* ctx)
     {
         auto index = ctx->m_Args[0].Int;
         auto valueX = ctx->m_Args[1].Float;
@@ -786,120 +802,120 @@ namespace SCOL::Natives
         g_Pointers.ScriptGlobals[index >> 0x12 & 0x3F][(index & 0x3FFFF) + 2].Float = valueZ;
     }
 
-    static void NativeCommandScriptGlobalGetInt(rage::scrNativeCallContext* ctx)
+    static void NativeCommandScriptGlobalGetInt(rage::scrThread::NativeContext* ctx)
     {
         auto index = ctx->m_Args[0].Int;
 
-        ctx->m_ReturnValue->Int = g_Pointers.ScriptGlobals[index >> 0x12 & 0x3F][index & 0x3FFFF].Int;
+        ctx->m_Rets->Int = g_Pointers.ScriptGlobals[index >> 0x12 & 0x3F][index & 0x3FFFF].Int;
     }
 
-    static void NativeCommandScriptGlobalGetFloat(rage::scrNativeCallContext* ctx)
+    static void NativeCommandScriptGlobalGetFloat(rage::scrThread::NativeContext* ctx)
     {
         auto index = ctx->m_Args[0].Int;
 
-        ctx->m_ReturnValue->Float = g_Pointers.ScriptGlobals[index >> 0x12 & 0x3F][index & 0x3FFFF].Float;
+        ctx->m_Rets->Float = g_Pointers.ScriptGlobals[index >> 0x12 & 0x3F][index & 0x3FFFF].Float;
     }
 
-    static void NativeCommandScriptGlobalGetTextLabel(rage::scrNativeCallContext* ctx)
+    static void NativeCommandScriptGlobalGetTextLabel(rage::scrThread::NativeContext* ctx)
     {
         auto index = ctx->m_Args[0].Int;
 
-        ctx->m_ReturnValue->String = reinterpret_cast<char*>(&g_Pointers.ScriptGlobals[index >> 0x12 & 0x3F][index & 0x3FFFF]);
+        ctx->m_Rets->String = reinterpret_cast<char*>(&g_Pointers.ScriptGlobals[index >> 0x12 & 0x3F][index & 0x3FFFF]);
     }
 
-    static void NativeCommandScriptGlobalGetVector(rage::scrNativeCallContext* ctx)
+    static void NativeCommandScriptGlobalGetVector(rage::scrThread::NativeContext* ctx)
     {
         auto index = ctx->m_Args[0].Int;
 
-        ctx->m_ReturnValue[0].Float = g_Pointers.ScriptGlobals[index >> 0x12 & 0x3F][(index & 0x3FFFF) + 0].Float;
-        ctx->m_ReturnValue[1].Float = g_Pointers.ScriptGlobals[index >> 0x12 & 0x3F][(index & 0x3FFFF) + 1].Float;
-        ctx->m_ReturnValue[2].Float = g_Pointers.ScriptGlobals[index >> 0x12 & 0x3F][(index & 0x3FFFF) + 2].Float;
+        ctx->m_Rets[0].Float = g_Pointers.ScriptGlobals[index >> 0x12 & 0x3F][(index & 0x3FFFF) + 0].Float;
+        ctx->m_Rets[1].Float = g_Pointers.ScriptGlobals[index >> 0x12 & 0x3F][(index & 0x3FFFF) + 1].Float;
+        ctx->m_Rets[2].Float = g_Pointers.ScriptGlobals[index >> 0x12 & 0x3F][(index & 0x3FFFF) + 2].Float;
     }
 
-    static void NativeCommandScriptGlobalGetPointer(rage::scrNativeCallContext* ctx)
+    static void NativeCommandScriptGlobalGetPointer(rage::scrThread::NativeContext* ctx)
     {
         auto index = ctx->m_Args[0].Int;
 
-        ctx->m_ReturnValue->Any = reinterpret_cast<std::uint64_t>(&g_Pointers.ScriptGlobals[index >> 0x12 & 0x3F][index & 0x3FFFF]);
+        ctx->m_Rets->Any = reinterpret_cast<std::uint64_t>(&g_Pointers.ScriptGlobals[index >> 0x12 & 0x3F][index & 0x3FFFF]);
     }
 
-    static void NativeCommandScriptFunctionBeginCall(rage::scrNativeCallContext* ctx)
+    static void NativeCommandScriptFunctionBeginCall(rage::scrThread::NativeContext* ctx)
     {
         auto hash = ctx->m_Args[0].Int;
         auto pc = ctx->m_Args[1].Int;
 
-        scrFunctionCallContext.BeginCall(hash, pc);
+        g_scrFunctionCallContext.BeginCall(hash, pc);
     }
 
-    static void NativeCommandScriptFunctionAddParamInt(rage::scrNativeCallContext* ctx)
+    static void NativeCommandScriptFunctionAddParamInt(rage::scrThread::NativeContext* ctx)
     {
         auto value = ctx->m_Args[0].Int;
 
-        scrFunctionCallContext.AddParam(value);
+        g_scrFunctionCallContext.AddParam(value);
     }
 
-    static void NativeCommandScriptFunctionAddParamFloat(rage::scrNativeCallContext* ctx)
+    static void NativeCommandScriptFunctionAddParamFloat(rage::scrThread::NativeContext* ctx)
     {
         auto value = ctx->m_Args[0].Float;
 
-        scrFunctionCallContext.AddParam(value);
+        g_scrFunctionCallContext.AddParam(value);
     }
 
-    static void NativeCommandScriptFunctionAddParamString(rage::scrNativeCallContext* ctx)
+    static void NativeCommandScriptFunctionAddParamString(rage::scrThread::NativeContext* ctx)
     {
         auto value = ctx->m_Args[0].String;
 
-        scrFunctionCallContext.AddParam(value);
+        g_scrFunctionCallContext.AddParam(value);
     }
 
-    static void NativeCommandScriptFunctionAddParamVector(rage::scrNativeCallContext* ctx)
+    static void NativeCommandScriptFunctionAddParamVector(rage::scrThread::NativeContext* ctx)
     {
         auto valueX = ctx->m_Args[0].Float;
         auto valueY = ctx->m_Args[1].Float;
         auto valueZ = ctx->m_Args[2].Float;
 
-        scrFunctionCallContext.AddParam(valueX);
-        scrFunctionCallContext.AddParam(valueY);
-        scrFunctionCallContext.AddParam(valueZ);
+        g_scrFunctionCallContext.AddParam(valueX);
+        g_scrFunctionCallContext.AddParam(valueY);
+        g_scrFunctionCallContext.AddParam(valueZ);
     }
 
-    static void NativeCommandScriptFunctionAddParamPointer(rage::scrNativeCallContext* ctx)
+    static void NativeCommandScriptFunctionAddParamPointer(rage::scrThread::NativeContext* ctx)
     {
         auto value = ctx->m_Args[0].Any;
 
-        scrFunctionCallContext.AddParam(reinterpret_cast<std::uint64_t*>(value));
+        g_scrFunctionCallContext.AddParam(reinterpret_cast<std::uint64_t*>(value));
     }
 
-    static void NativeCommandScriptFunctionAddParamReference(rage::scrNativeCallContext* ctx)
+    static void NativeCommandScriptFunctionAddParamReference(rage::scrThread::NativeContext* ctx)
     {
         auto value = ctx->m_Args[0].Reference;
 
-        scrFunctionCallContext.AddParam(value);
+        g_scrFunctionCallContext.AddParam(value);
     }
 
-    static void NativeCommandScriptFunctionEndCallProc(rage::scrNativeCallContext* ctx)
+    static void NativeCommandScriptFunctionEndCallProc(rage::scrThread::NativeContext* ctx)
     {
-        scrFunctionCallContext.EndCall<int>(); // Return nothing.
+        g_scrFunctionCallContext.EndCall<int>(); // Return nothing.
     }
 
-    static void NativeCommandScriptFunctionEndCallInt(rage::scrNativeCallContext* ctx)
+    static void NativeCommandScriptFunctionEndCallInt(rage::scrThread::NativeContext* ctx)
     {
-        ctx->m_Args->Int = scrFunctionCallContext.EndCall<int>();
+        ctx->m_Args->Int = g_scrFunctionCallContext.EndCall<int>();
     }
 
-    static void NativeCommandScriptFunctionEndCallFloat(rage::scrNativeCallContext* ctx)
+    static void NativeCommandScriptFunctionEndCallFloat(rage::scrThread::NativeContext* ctx)
     {
-        ctx->m_Args->Float = scrFunctionCallContext.EndCall<float>();
+        ctx->m_Args->Float = g_scrFunctionCallContext.EndCall<float>();
     }
 
-    static void NativeCommandScriptFunctionEndCallString(rage::scrNativeCallContext* ctx)
+    static void NativeCommandScriptFunctionEndCallString(rage::scrThread::NativeContext* ctx)
     {
-        ctx->m_Args->String = scrFunctionCallContext.EndCall<const char*>();
+        ctx->m_Args->String = g_scrFunctionCallContext.EndCall<const char*>();
     }
 
-    static void NativeCommandScriptFunctionEndCallVector(rage::scrNativeCallContext* ctx)
+    static void NativeCommandScriptFunctionEndCallVector(rage::scrThread::NativeContext* ctx)
     {
-        auto vector = scrFunctionCallContext.EndCall<rage::scrVector>();
+        auto vector = g_scrFunctionCallContext.EndCall<rage::scrVector>();
 
         ctx->m_Args[0].Float = vector.x;
         ctx->m_Args[1].Float = vector.y;
@@ -908,7 +924,7 @@ namespace SCOL::Natives
 
     void RegisterNatives()
     {
-        static auto RegisterNative = [](rage::scrNativeHash hash, rage::scrNativeHandler handler) {
+        static auto RegisterNative = [](std::uint64_t hash, rage::scrThread::NativeContext::Handler handler) {
             g_Pointers.RegisterNativeCommand(g_Pointers.NativeRegistrationTable, hash, handler);
             LOGF(INFO, "Registered native command with hash 0x{:X}.", hash);
         };
@@ -916,6 +932,7 @@ namespace SCOL::Natives
         // clang-format off
 
         RegisterNative(LOG_TO_FILE,                                       NativeCommandLogToFile);
+        RegisterNative(CLEAR_LOG_FILE,                                    NativeCommandClearLogFile);
         RegisterNative(REGISTER_INDIVIDUAL_FILE,                          NativeCommandRegisterIndividualFile);
         RegisterNative(INVALIDATE_INDIVIDUAL_FILE,                        NativeCommandInvalidateIndividualFile);
 

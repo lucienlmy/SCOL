@@ -6,9 +6,9 @@ namespace rage
     class scrVector
     {
     public:
-        alignas(8) float x{};
-        alignas(8) float y{};
-        alignas(8) float z{};
+        alignas(8) float x{}; // 00000000
+        alignas(8) float y{}; // 00000008
+        alignas(8) float z{}; // 00000010
 
         constexpr scrVector()
             : x(),
@@ -87,5 +87,5 @@ namespace rage
             return vec;
         }
     };
-    static_assert(sizeof(scrVector) == 0x18);
+    static_assert(sizeof(scrVector) == 0x00000018);
 }

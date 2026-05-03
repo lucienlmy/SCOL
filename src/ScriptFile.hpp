@@ -131,11 +131,8 @@ namespace SCOL
             return 0;
         }
 
-        std::ifstream m_File;
         bool m_IsValid;
-
         Header m_Header;
-
         std::vector<std::uint8_t> m_Code;
         std::vector<std::uint64_t> m_Statics;
         std::vector<std::uint64_t> m_Globals;

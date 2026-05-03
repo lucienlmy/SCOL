@@ -28,4 +28,7 @@ using namespace al;
 namespace SCOL
 {
     using namespace std::chrono_literals;
+
+    extern std::atomic<bool> g_StartupAvailable;
+    extern std::atomic<bool> g_LoadRequested;
 }

@@ -10,5 +10,5 @@ namespace rage
         scrValue* Reference;
         std::uint64_t Any;
     };
-    static_assert(sizeof(scrValue) == 0x08);
+    static_assert(sizeof(scrValue) == 0x00000008);
 }

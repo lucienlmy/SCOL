@@ -12,20 +12,19 @@ namespace SCOL
         });
 
         scanner.Add("NativeRegistrationTable", "4C 8D 0D ? ? ? ? 4C 8D 15 ? ? ? ? 45 31 F6", [this](Memory addr) {
-            NativeRegistrationTable = addr.Add(3).Rip().As<PVOID>();
+            NativeRegistrationTable = addr.Add(3).Rip().As<rage::scrNativeRegistration*>();
+        });
+
+        scanner.Add("UpdateScriptThreads", "56 57 55 53 48 83 EC ? 85 C9 BE", [this](Memory addr) {
+            UpdateScriptThreads = addr.As<PVOID>();
         });
 
         scanner.Add("RegisterNativeCommand", "4A 8B 34 E9 48 85 F6 74 16", [this](Memory addr) {
             RegisterNativeCommand = addr.Sub(0x1C).As<Functions::RegisterNativeCommand>();
         });
 
-        scanner.Add("LoadAndStartScriptObj", "48 81 EC 38 02 00 00 45 89 CE", [this](Memory addr) {
-            LoadAndStartScriptObj = addr.Sub(0xC).As<Functions::LoadAndStartScriptObj>();
-        });
-
-        scanner.Add("ScriptHandlerMgrPtr&RegisterScriptHandler", "48 8D 0D ? ? ? ? 48 89 C2 E8 ? ? ? ? 8B 15", [this](Memory addr) {
-            ScriptHandlerMgrPtr = addr.Add(3).Rip().As<PVOID>();
-            RegisterScriptHandler = addr.Add(0xB).Rip().As<Functions::RegisterScriptHandler>();
+        scanner.Add("LoadScriptProgram", "E8 ? ? ? ? 48 89 C3 48 89 C1 48 89 F2 45 89 F8", [this](Memory addr) {
+            LoadScriptProgram = addr.Add(1).Rip().As<Functions::LoadScriptProgram>();
         });
 
         scanner.Add("ScriptThreads", "48 8B 05 ? ? ? ? 48 89 34 F8 48 FF C7 48 39 FB 75 97", [this](Memory addr) {
@@ -46,6 +45,10 @@ namespace SCOL
 
         scanner.Add("LoadingScreenState", "8B 0D ? ? ? ? 83 C1 F7", [this](Memory addr) {
             LoadingScreenState = addr.Add(2).Rip().As<std::uint32_t*>();
+        });
+
+        scanner.Add("rage_new", "E8 ? ? ? ? 49 89 C4 41 FF D7", [this](Memory addr) {
+            rage_new = addr.Add(1).Rip().As<Functions::rage_new>();
         });
 
         scanner.Add("sysVirtualFree", "E8 ? ? ? ? 4A C7 04 3B 00 00 00 00", [this](Memory addr) {

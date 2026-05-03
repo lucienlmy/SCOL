@@ -1,18 +1,24 @@
 #include "Hooking.hpp"
-#include "Loader.hpp"
 #include "Pointers.hpp"
-#include "rage/scrProgram.hpp"
+#include "ScriptFiber.hpp"
+#include "ScriptLoader.hpp"
 
 namespace SCOL
 {
     static LRESULT WndProcDetour(HWND hwnd, UINT umsg, WPARAM wparam, LPARAM lparam)
     {
         if (umsg == WM_KEYUP && wparam == g_Variables.ReloadKey)
-        {
-            Loader::ReloadScripts();
-        }
+            g_LoadRequested = true;
 
         return Hooking::GetOriginal<decltype(&WndProcDetour)>("WndProcHook")(hwnd, umsg, wparam, lparam);
+    }
+
+    static bool UpdateScriptThreadsDetour(std::uint32_t insnCount)
+    {
+        auto ret = Hooking::GetOriginal<decltype(&UpdateScriptThreadsDetour)>("UpdateScriptThreadsHook")(insnCount);
+
+        ScriptFiber::Tick();
+        return ret;
     }
 
     static void AllocateGlobalBlockDetour(rage::scrProgram* program)
@@ -31,15 +37,15 @@ namespace SCOL
 
     static uint32_t StartNewGtaThreadDetour(uint32_t programHash, void* args, uint32_t argCount, uint32_t stackSize)
     {
-        if (auto path = Loader::GetScriptOverridePath(programHash); !path.empty())
+        if (auto path = ScriptLoader::GetScriptOverridePath(programHash); !path.empty())
         {
-            if (auto program = rage::scrProgram::GetProgram(programHash))
+            if (auto program = rage::scrProgram::GetByHash(programHash))
             {
                 auto destructor = *(*reinterpret_cast<void***>(program) + 6);
-                reinterpret_cast<void (*)(rage::scrProgram*, bool)>(destructor)(program, true); // Free the program loaded by natives first, LoadAndStartScriptObj will create a new one from the SCO
+                reinterpret_cast<void (*)(rage::scrProgram*, bool)>(destructor)(program, true); // Free the program loaded by natives first, we will create a new one.
             }
 
-            if (auto id = Loader::LoadScript(path, args, argCount, stackSize))
+            if (auto id = ScriptLoader::LoadScript(path, args, argCount, stackSize))
             {
                 LOGF(INFO, "Loaded script override from path '{}'.", path.string().c_str());
                 return id;
@@ -55,6 +61,7 @@ namespace SCOL
             return false;
 
         AddHook("WndProcHook", g_Pointers.WndProc, WndProcDetour);
+        AddHook("UpdateScriptThreadsHook", g_Pointers.UpdateScriptThreads, UpdateScriptThreadsDetour);
         AddHook("AllocateGlobalBlockHook", g_Pointers.AllocateGlobalBlock, AllocateGlobalBlockDetour);
         AddHook("StartNewGtaThreadHook", g_Pointers.StartNewGtaThread, StartNewGtaThreadDetour);
 

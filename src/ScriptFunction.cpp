@@ -1,48 +1,45 @@
 #include "ScriptFunction.hpp"
 #include "Pointers.hpp"
-#include "rage/scrProgram.hpp"
-#include "rage/scrThread.hpp"
-#include "rage/tlsContext.hpp"
+#include "ScriptFiber.hpp"
 
 namespace SCOL
 {
-    void ScriptFunction::CallImpl(const joaat_t script, const joaat_t pc, const std::vector<std::uint64_t>& args, void* returnValue, std::uint32_t returnSize)
+    void ScriptFunction::CallInternal(const joaat_t script, const std::uint32_t pc, const std::uint64_t* args, const std::uint32_t argCount, void* returnValue, std::uint32_t returnSize)
     {
-        auto thread = rage::scrThread::GetThread(script);
-        auto program = rage::scrProgram::GetProgram(script);
+        auto thread = rage::scrThread::GetByHash(script);
+        auto program = rage::scrProgram::GetByHash(script);
 
-        if (!thread || !program || !pc)
+        if (!thread || !program || pc == 0)
             return;
 
-        if (auto byte = program->GetCode(pc); !byte || *byte != 0x2D) // This will fail if the PC ends up pointing to some opcode's operand whose value is 0x2D, but whatever.
-        {
-            LOGF(WARNING, "Attempted to execute a script function from an invalid address.");
-            return;
-        }
-
-        auto tlsCtx = rage::tlsContext::Get();
+        auto tls = rage::scrThread::TLS::Get();
         auto stack = thread->m_Stack;
-        auto ogThread = tlsCtx->m_CurrentScriptThread;
+        auto ogThread = *tls->m_CurrentThread;
+        auto ogState = thread->m_Context.m_State;
 
-        tlsCtx->m_CurrentScriptThread = thread;
-        tlsCtx->m_ScriptThreadActive = true;
+        *tls->m_CurrentThread = thread;
+        *tls->m_CurrentThreadActive = true;
 
         auto ctx = thread->m_Context;
-        auto topStack = ctx.m_StackPointer;
+        auto topStack = ctx.m_Sp;
 
-        for (auto& arg : args)
-            stack[ctx.m_StackPointer++].Any = arg;
+        for (std::uint32_t i = 0; i < argCount; i++)
+            stack[ctx.m_Sp++].Any = args[i];
 
-        stack[ctx.m_StackPointer++].Any = 0;
-        ctx.m_ProgramCounter = pc;
-        ctx.m_State = rage::scrThreadState::RUNNING;
+        stack[ctx.m_Sp++].Any = 0;
+        ctx.m_Pc = pc;
+        ctx.m_State = rage::scrThread::State::RUNNING;
 
-        g_Pointers.RunScriptThread(stack, g_Pointers.ScriptGlobals, program, &ctx);
+        while (g_Pointers.RunScriptThread(stack, g_Pointers.ScriptGlobals, program, &ctx) == rage::scrThread::State::PAUSED)
+            ScriptFiber::Yield(std::chrono::seconds(static_cast<std::uint32_t>(ctx.m_WaitTime))); // WAIT converts ms to sec
 
-        tlsCtx->m_CurrentScriptThread = ogThread;
-        tlsCtx->m_ScriptThreadActive = ogThread != nullptr;
+        *tls->m_CurrentThread = ogThread;
+        *tls->m_CurrentThreadActive = ogThread != nullptr;
 
-        if (returnValue)
+        if (thread->m_Context.m_State != ogState && thread->m_Context.m_State != rage::scrThread::State::KILLED)
+            thread->m_Context.m_State = ogState;
+
+        if (returnValue && returnSize != 0)
             std::memcpy(returnValue, stack + topStack, returnSize);
     }
 }

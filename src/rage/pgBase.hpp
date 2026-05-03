@@ -5,9 +5,9 @@ namespace rage
     class pgBase
     {
     public:
-        virtual ~pgBase() = default;
+        virtual ~pgBase() = default; // 00000000
 
-        std::uint32_t m_MapSize;
+        void* m_Map; // 00000008
     };
-    static_assert(sizeof(pgBase) == 0x10);
+    static_assert(sizeof(pgBase) == 0x00000010);
 }
