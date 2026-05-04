@@ -69,7 +69,7 @@ namespace rage
             std::uint32_t m_Id;          // 00000000
             char m_Pad1[4];              // 00000004
             std::uint64_t m_ProgramHash; // 00000008
-            std::uint32_t m_InstanceId;  // 00000010
+            std::uint32_t m_CreateTime;  // 00000010
             bool m_HasNetComponent;      // 00000014
             std::uint8_t m_HostBD[10];   // 00000015
             std::uint8_t m_PlayerBD[10]; // 0000001F
@@ -98,7 +98,7 @@ namespace rage
         std::uint32_t m_InsnCount;  // 000000C0 (unused, debug-only)
         std::uint32_t m_ArgsSize;   // 000000C4
         std::uint32_t m_ArgsOffset; // 000000C8
-        std::uint32_t m_InstanceId; // 000000CC
+        std::uint32_t m_CreateTime; // 000000CC (set by timeGetTime)
         char m_KillReason[128];     // 000000D0
         std::uint32_t m_ScriptHash; // 00000150
         char m_ScriptName[64];      // 00000154
