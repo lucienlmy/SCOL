@@ -1,4 +1,4 @@
-#include "Hooking.hpp"
+#include "Hooks.hpp"
 #include "Natives.hpp"
 #include "Pointers.hpp"
 #include "ScriptFiber.hpp"
@@ -50,11 +50,7 @@ namespace SCOL
         }
         LOGF(INFO, "Pointers initialized.");
 
-        if (!Hooking::Init())
-        {
-            MessageBoxA(0, "Failed to initialize hooking.", "SCOL", MB_ICONERROR);
-            return EXIT_FAILURE;
-        }
+        g_Hooks.Init();
         LOGF(INFO, "Hooking initialized.");
 
         while (!g_Pointers.NativeRegistrationTable->m_Initialized)

@@ -1,7 +1,4 @@
 #pragma once
-
-#include <AsyncLogger/Logger.hpp>
-#include <MinHook.h>
 #include <Windows.h>
 #include <array>
 #include <atomic>
@@ -19,6 +16,9 @@
 #include <thread>
 #include <unordered_set>
 #include <vector>
+
+#include <AsyncLogger/Logger.hpp>
+#include <safetyhook.hpp>
 
 using namespace al;
 #include "Logging.hpp"

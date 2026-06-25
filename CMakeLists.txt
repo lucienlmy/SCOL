@@ -4,7 +4,7 @@ project(SCOL CXX)
 
 include(cmake/async-logger.cmake)
 include(cmake/json.cmake)
-include(cmake/minhook.cmake)
+include(cmake/safetyhook.cmake)
 
 set(SRC_DIR "${PROJECT_SOURCE_DIR}/src")
 file(GLOB_RECURSE SRC_FILES
@@ -13,7 +13,7 @@ file(GLOB_RECURSE SRC_FILES
 )
 
 add_library(${PROJECT_NAME} MODULE ${SRC_FILES})
-set_property(TARGET ${PROJECT_NAME} PROPERTY CXX_STANDARD 20)
+set_property(TARGET ${PROJECT_NAME} PROPERTY CXX_STANDARD 23)
 
 target_precompile_headers(${PROJECT_NAME} PUBLIC "${SRC_DIR}/Common.hpp")
 
@@ -25,14 +25,12 @@ add_compile_definitions(
 
 target_include_directories(${PROJECT_NAME} PRIVATE
     "${SRC_DIR}"
-    "${minhook_SOURCE_DIR}/include"
-    "${minhook_SOURCE_DIR}/src/hde"
 )
 
 target_link_libraries(${PROJECT_NAME} PRIVATE
     AsyncLogger
     nlohmann_json::nlohmann_json
-    minhook
+    safetyhook::safetyhook
 )
 
 set_target_properties(${PROJECT_NAME} PROPERTIES SUFFIX ".asi")
