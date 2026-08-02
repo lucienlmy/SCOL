@@ -12,7 +12,7 @@ namespace SCOL
 
     struct Hooks : HookData
     {
-        void Init();
+        bool Init();
     };
 
     inline Hooks g_Hooks;

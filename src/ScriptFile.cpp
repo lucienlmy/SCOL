@@ -129,6 +129,8 @@ namespace SCOL
         {
             file.seekg(m_Header.NameOffset, std::ios_base::beg);
             std::getline(file, m_Name, '\0');
+            if (size_t pos = m_Name.find_last_of('.'); pos != std::string::npos)
+                m_Name.erase(pos);
         }
 
         // Strings

@@ -45,13 +45,17 @@ namespace SCOL
 
         if (!g_Pointers.Init())
         {
-            MessageBoxA(0, "Some patterns could not be found.", "SCOL", MB_ICONERROR);
+            MessageBoxA(0, "Failed to initialize pointers.", "SCOL", MB_ICONERROR);
             return EXIT_FAILURE;
         }
         LOGF(INFO, "Pointers initialized.");
 
-        g_Hooks.Init();
-        LOGF(INFO, "Hooking initialized.");
+        if (!g_Hooks.Init())
+        {
+            MessageBoxA(0, "Failed to initialize hooks.", "SCOL", MB_ICONERROR);
+            return EXIT_FAILURE;
+        }
+        LOGF(INFO, "Hooks initialized.");
 
         while (!g_Pointers.NativeRegistrationTable->m_Initialized)
             std::this_thread::sleep_for(100ms);

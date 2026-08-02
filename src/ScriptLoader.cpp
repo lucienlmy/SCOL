@@ -1,4 +1,5 @@
 #include "ScriptLoader.hpp"
+#include "Hooks.hpp"
 #include "Natives.hpp"
 #include "Pointers.hpp"
 #include "ScriptFile.hpp"
@@ -34,8 +35,10 @@ namespace SCOL
         {
             if (auto program = rage::scrProgram::GetByHash(programHash))
             {
-                program->m_RefCount--; // Due to the same reason explained in LoadStreamedFullScript.
-                return g_Pointers.StartNewGtaThread(programHash, args, argCount * sizeof(rage::scrValue), stackSize);
+                program->m_RefCount++; // Due to the same reason explained in LoadStreamedFullScript.
+                auto id = g_Pointers.StartNewGtaThread(programHash, args, argCount * sizeof(rage::scrValue), stackSize);
+                program->m_RefCount -= 2;
+                return id;
             }
         }
 
@@ -120,15 +123,17 @@ namespace SCOL
         }
 
         rage::scrProgram::Add(program);
+        program->m_RefCount++; // scrThread::CreateThread will call scrThread::Kill, which will call scrProgram::Release, which will decrement the reference, which, if reaches 0, frees the program, so set this to 2 to avoid that.
 
-        auto id = g_Pointers.StartNewGtaThread(program->m_NameHash, args, argCount * sizeof(rage::scrValue), stackSize);
+        auto id = g_Hooks.StartNewGtaThread.call<uint32_t>(program->m_NameHash, args, argCount * sizeof(rage::scrValue), stackSize); // Call the original to prevent recursive call when loading script overrides.
 
-        // At this point, the program has two references:
+        // At this point, the program has three references:
         // 1. Added by the constructor
-        // 2. Added by scrThread::CreateThread via StartNewGtaThread
-        // We decrement once here so the ref count becomes 1.
+        // 2. Added by us above
+        // 3. Added by scrThread::CreateThread
+        // We decrement twice here so the ref count becomes 1.
         // When scrThread::Kill is called, the count will drop to 0 and the program will be freed.
-        program->m_RefCount--;
+        program->m_RefCount -= 2;
         return id;
     }
 

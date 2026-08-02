@@ -35,7 +35,7 @@ namespace SCOL
         g_Hooks.AllocateGlobalBlock.call<void>(program);
     }
 
-    static uint32_t StartNewGtaThread(uint32_t programHash, void* args, uint32_t argCount, uint32_t stackSize)
+    static uint32_t StartNewGtaThread(uint32_t programHash, void* args, uint32_t argsSize, uint32_t stackSize)
     {
         if (auto path = ScriptLoader::GetScriptOverridePath(programHash); !path.empty())
         {
@@ -45,26 +45,38 @@ namespace SCOL
                 reinterpret_cast<void (*)(rage::scrProgram*, bool)>(destructor)(program, true); // Free the program loaded by natives first, we will create a new one.
             }
 
-            if (auto id = ScriptLoader::LoadScript(path, args, argCount, stackSize))
+            if (auto id = ScriptLoader::LoadScript(path, args, argsSize / 8, stackSize))
             {
                 LOGF(INFO, "Loaded script override from path '{}'.", path.string().c_str());
                 return id;
             }
         }
 
-        return g_Hooks.StartNewGtaThread.call<uint32_t>(programHash, args, argCount, stackSize);
+        return g_Hooks.StartNewGtaThread.call<uint32_t>(programHash, args, argsSize, stackSize);
     }
 
-    void Hooks::Init()
+    bool Hooks::Init()
     {
-        static auto CreateInline = [](const char* name, SafetyHookInline& inlineHook, void* target, void* destination) {
+        bool success = true;
+
+        static auto CreateInline = [&success](const char* name, SafetyHookInline& inlineHook, void* target, void* destination) {
             inlineHook = safetyhook::create_inline(target, destination);
-            LOGF(INFO, "Created inline hook for {}.", name);
+            if (inlineHook)
+            {
+                LOGF(INFO, "Created inline hook for {}.", name);
+            }
+            else
+            {
+                LOGF(FATAL, "Failed to create inline hook for {}.", name);
+                success = false;
+            }
         };
 
         CreateInline("WndProc", g_Hooks.WndProc, g_Pointers.WndProc, SCOL::WndProc);
         CreateInline("UpdateScriptThreads", g_Hooks.UpdateScriptThreads, g_Pointers.UpdateScriptThreads, SCOL::UpdateScriptThreads);
         CreateInline("AllocateGlobalBlock", g_Hooks.AllocateGlobalBlock, g_Pointers.AllocateGlobalBlock, SCOL::AllocateGlobalBlock);
         CreateInline("StartNewGtaThread", g_Hooks.StartNewGtaThread, g_Pointers.StartNewGtaThread, SCOL::StartNewGtaThread);
+
+        return success;
     }
 }

@@ -11,7 +11,6 @@ namespace SCOL
         void Add(const char* name, const char* pattern, const ScanFunc& func);
         bool Scan();
 
-        static std::optional<Memory> ScanPattern(const std::optional<std::uint8_t>* pattern, std::size_t length, Memory begin, std::size_t moduleSize);
         static std::optional<Memory> ScanPattern(const char* name, const char* pattern);
 
     private:

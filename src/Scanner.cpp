@@ -2,159 +2,73 @@
 
 namespace SCOL
 {
-    static std::optional<std::uint8_t> StrToHex(char const c)
-    {
-        switch (c)
-        {
-        case '0':
-            return static_cast<std::uint8_t>(0x0);
-        case '1':
-            return static_cast<std::uint8_t>(0x1);
-        case '2':
-            return static_cast<std::uint8_t>(0x2);
-        case '3':
-            return static_cast<std::uint8_t>(0x3);
-        case '4':
-            return static_cast<std::uint8_t>(0x4);
-        case '5':
-            return static_cast<std::uint8_t>(0x5);
-        case '6':
-            return static_cast<std::uint8_t>(0x6);
-        case '7':
-            return static_cast<std::uint8_t>(0x7);
-        case '8':
-            return static_cast<std::uint8_t>(0x8);
-        case '9':
-            return static_cast<std::uint8_t>(0x9);
-        case 'a':
-            return static_cast<std::uint8_t>(0xa);
-        case 'b':
-            return static_cast<std::uint8_t>(0xb);
-        case 'c':
-            return static_cast<std::uint8_t>(0xc);
-        case 'd':
-            return static_cast<std::uint8_t>(0xd);
-        case 'e':
-            return static_cast<std::uint8_t>(0xe);
-        case 'f':
-            return static_cast<std::uint8_t>(0xf);
-        case 'A':
-            return static_cast<std::uint8_t>(0xA);
-        case 'B':
-            return static_cast<std::uint8_t>(0xB);
-        case 'C':
-            return static_cast<std::uint8_t>(0xC);
-        case 'D':
-            return static_cast<std::uint8_t>(0xD);
-        case 'E':
-            return static_cast<std::uint8_t>(0xE);
-        case 'F':
-            return static_cast<std::uint8_t>(0xF);
-        default:
-            return std::nullopt;
-        }
-    }
-
     static std::vector<std::optional<std::uint8_t>> ParsePattern(std::string_view pattern)
     {
-        const auto sizeMinusOne = pattern.size() - 1;
+        std::vector<std::optional<std::uint8_t>> bytes;
+        bytes.reserve((pattern.size() + 1) / 3);
 
-        std::vector<std::optional<uint8_t>> bytes;
-        bytes.reserve(sizeMinusOne / 2);
-        for (size_t i = 0; i != sizeMinusOne; ++i)
+        auto Hex = [](char c) -> std::uint8_t {
+            return c <= '9' ? c - '0' : ((c | 0x20) - 'a' + 0xA);
+        };
+
+        for (std::size_t i = 0; i < pattern.size();)
         {
             if (pattern[i] == ' ')
+            {
+                ++i;
                 continue;
+            }
 
-            if (pattern[i] != '?')
-            {
-                auto c1 = StrToHex(pattern[i]);
-                auto c2 = StrToHex(pattern[i + 1]);
-                if (c1 && c2)
-                {
-                    bytes.emplace_back(static_cast<uint8_t>((*c1 * 0x10) + *c2));
-                }
-            }
+            if (pattern[i] == '?')
+                bytes.emplace_back(std::nullopt);
             else
-            {
-                bytes.push_back({});
-            }
+                bytes.emplace_back(static_cast<std::uint8_t>((Hex(pattern[i]) << 4) | Hex(pattern[i + 1])));
+
+            i += 2;
         }
 
         return bytes;
     }
 
-    std::optional<Memory> Scanner::ScanPattern(const std::optional<std::uint8_t>* pattern, std::size_t length, Memory begin, std::size_t moduleSize)
-    {
-        std::size_t maxShift = length;
-        std::size_t maxIdx = length - 1;
-
-        std::size_t wildCardIdx{static_cast<std::size_t>(-1)};
-        for (int i{static_cast<int>(maxIdx - 1)}; i >= 0; --i)
-        {
-            if (!pattern[i])
-            {
-                maxShift = maxIdx - i;
-                wildCardIdx = i;
-                break;
-            }
-        }
-
-        std::size_t shiftTable[UINT8_MAX + 1]{};
-        for (std::size_t i{}; i <= UINT8_MAX; ++i)
-        {
-            shiftTable[i] = maxShift;
-        }
-
-        for (std::size_t i{wildCardIdx + 1}; i != maxIdx; ++i)
-        {
-            shiftTable[*pattern[i]] = maxIdx - i;
-        }
-
-        const auto scanEnd = moduleSize - length;
-        for (std::size_t currentIdx{}; currentIdx <= scanEnd;)
-        {
-            for (std::ptrdiff_t patternIdx{(std::ptrdiff_t)maxIdx}; patternIdx >= 0; --patternIdx)
-            {
-                if (pattern[patternIdx] && *begin.Add(currentIdx + patternIdx).As<std::uint8_t*>() != *pattern[patternIdx])
-                {
-                    currentIdx += shiftTable[*begin.Add(currentIdx + maxIdx).As<std::uint8_t*>()];
-                    break;
-                }
-                else if (patternIdx == NULL)
-                {
-                    return begin.Add(currentIdx);
-                }
-            }
-        }
-
-        return std::nullopt;
-    }
-
     std::optional<Memory> Scanner::ScanPattern(const char* name, const char* pattern)
     {
         auto hash = Joaat(name);
-
         if (m_CachedResults.contains(hash))
             return m_CachedResults[hash];
 
-        Memory base = GetModuleHandleA(0);
-        auto dosHeader = base.As<IMAGE_DOS_HEADER*>();
-        auto size = base.Add(dosHeader->e_lfanew).As<IMAGE_NT_HEADERS*>()->OptionalHeader.SizeOfImage;
+        uint8_t* base = reinterpret_cast<uint8_t*>(GetModuleHandleA(0));
+
+        PIMAGE_DOS_HEADER dos = reinterpret_cast<PIMAGE_DOS_HEADER>(base);
+        PIMAGE_NT_HEADERS nt = reinterpret_cast<PIMAGE_NT_HEADERS>(base + dos->e_lfanew);
 
         auto parsed = ParsePattern(pattern);
-        auto data = parsed.data();
-        auto length = parsed.size();
 
-        if (auto result = ScanPattern(data, length, base, size))
+        size_t moduleSize = nt->OptionalHeader.SizeOfImage;
+        size_t patternSize = parsed.size();
+
+        for (size_t i = 0; i < moduleSize - patternSize; i++)
         {
-            auto rva = result->As<std::uintptr_t>() - base.As<std::uintptr_t>();
-            LOGF(INFO, "Found pattern {} at GTA5_Enhanced.exe+0x{:X}.", name, rva);
-            m_CachedResults[hash] = result;
-            return result;
+            bool match = true;
+            for (size_t j = 0; j < patternSize; j++)
+            {
+                if (parsed[j].has_value() && base[i + j] != parsed[j].value())
+                {
+                    match = false;
+                    break;
+                }
+            }
+
+            if (match)
+            {
+                auto result = Memory(base + i);
+                auto rva = result.As<std::uintptr_t>() - Memory(base).As<std::uintptr_t>();
+                LOGF(INFO, "Found pattern for {} at GTA5_Enhanced.exe+0x{:X}.", name, rva);
+                m_CachedResults[hash] = result;
+                return result;
+            }
         }
 
-        LOGF(FATAL, "Failed to find pattern {}.", name);
+        LOGF(FATAL, "Failed to find pattern for {}.", name);
         return std::nullopt;
     }
 
@@ -166,16 +80,13 @@ namespace SCOL
     bool Scanner::Scan()
     {
         bool success = true;
+
         for (auto& pattern : m_Patterns)
         {
             if (auto addr = ScanPattern(pattern.m_Name.c_str(), pattern.m_Pattern.c_str()))
-            {
                 pattern.m_Func(*addr);
-            }
             else
-            {
                 success = false;
-            }
         }
 
         return success;
